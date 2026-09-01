@@ -20,7 +20,10 @@ version = 1.1.0
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy==2.3.0,requests,urllib3,certifi,charset_normalizer,idna
+requirements = python3==3.11.9,kivy==2.3.0,requests,urllib3,certifi,charset_normalizer,idna
+
+# (str) python-for-android branch to use
+p4a.branch = master
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
