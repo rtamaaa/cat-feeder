@@ -43,6 +43,12 @@ android.sdk = 33
 # (str) Android NDK version to use
 android.ndk = 25b
 
+# (bool) If True, then automatically accept SDK license
+android.accept_sdk_license = True
+
+# (list) The Android archs to build for
+android.archs = arm64-v8a, armeabi-v7a
+
 [buildozer]
 
 # (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
