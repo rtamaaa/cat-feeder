@@ -1,0 +1,151 @@
+@startuml Class_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+
+title Class Diagram: Arsitektur Objek Aplikasi Kivy & Firmware
+
+package "Kivy Mobile Frontend (app/frontend/main.py)" {
+    
+    class SmartCatFeederApp {
+        + build() : RootLayout
+    }
+
+    class RootLayout {
+        - _open : Boolean
+        + open_drawer() : void
+        + close_drawer() : void
+        + refresh_page() : void
+        + logout() : void
+    }
+
+    class LeftDrawer {
+        + username_label : String
+        - _root : RootLayout
+        + navigate(screen_name: String) : void
+        + do_logout() : void
+    }
+
+    class MainScreen {
+        + active_tab : String
+        + server_url : String
+        + token : String
+        + username : String
+        + init(server_url, token, username, root_ref) : void
+        + go_to(target: String) : void
+    }
+
+    class BasePage {
+        + root_ref : RootLayout
+        + server_url : String
+        + token : String
+        + username : String
+        + on_enter() : void
+        + refresh() : void
+        # _get(path, cb, **params) : void
+        # _post(path, payload, cb) : void
+    }
+
+    class PageDash {
+        + status_badge : String
+        + status_color : String
+        + last_seen : String
+        + rtc_time : String
+        + feed_msg : String
+        + log_text : String
+        + send_feed() : void
+        + sync_rtc() : void
+        + go_wifi() : void
+    }
+
+    class PageSched {
+        + msg : String
+        - _rows : List<ScheduleRow>
+        + add_slot() : void
+        + save_all() : void
+        - _del_row(row: ScheduleRow) : void
+    }
+
+    class PageServo {
+        + close_angle : Int
+        + open_angle : Int
+        + duration_ms : Int
+        + msg : String
+        + hist_text : String
+        + save_settings(ca, oa, dur) : void
+        + load_history() : void
+    }
+
+    class PageHist {
+        + load() : void
+        - _render_logs(logs: List) : void
+    }
+
+    class PageWifi {
+        + is_ap : Boolean
+        + mode_note : String
+        + send_msg : String
+        + set_mode(ap: Boolean) : void
+        + send() : void
+    }
+
+    class ScheduleRow {
+        + enabled : Boolean
+        + slot_num : Int
+        + get_data() : Dict
+    }
+
+    SmartCatFeederApp --> RootLayout
+    RootLayout *-- LeftDrawer
+    RootLayout *-- MainScreen
+    MainScreen *-- BasePage
+    BasePage <|-- PageDash
+    BasePage <|-- PageSched
+    BasePage <|-- PageServo
+    BasePage <|-- PageHist
+    BasePage <|-- PageWifi
+    PageSched *-- ScheduleRow
+}
+
+package "NodeMCU ESP8266 Firmware (app/nodemcu/nodemcu.ino)" {
+    
+    class FeederFirmware <<ESP8266 Engine>> {
+        - servoCloseAngle : int = 0
+        - servoOpenAngle : int = 90
+        - feedDurationMs : int = 2000
+        - feedingState : FeedingState
+        - feedStartTime : unsigned long
+        - schedules : Schedule[6]
+        - rtc : RTC_DS3231
+        - feederServo : Servo
+        + setup() : void
+        + loop() : void
+        + handleServerPolling() : void
+        + handleHeartbeat() : void
+        + handleScheduleCheck() : void
+        + handleServoStateMachine() : void
+        + startFeeding(slot: int) : void
+        + loadConfigFromFS() : void
+        + saveConfigToFS() : void
+    }
+
+    enum FeedingState {
+        IDLE
+        OPENING
+        HOLDING
+        CLOSING
+        SETTLING
+    }
+
+    struct Schedule {
+        + enabled : bool
+        + hour : int
+        + minute : int
+        + lastFedDay : int
+    }
+
+    FeederFirmware *-- FeedingState
+    FeederFirmware *-- Schedule
+}
+
+@enduml

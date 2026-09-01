@@ -1,0 +1,75 @@
+@startuml UseCase_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam actorStyle awesome
+
+left to right direction
+
+actor "Pemilik Kucing (User)" as User
+actor "NodeMCU ESP8266 (Device)" as Device
+actor "Modul DS3231 RTC (Timer)" as RTC
+
+rectangle "Smart Cat Feeder System" {
+    
+    package "Autentikasi & Pengaturan Akun" {
+        usecase "UC01: Login ke Aplikasi" as UC_Login
+        usecase "UC02: Logout dari Aplikasi" as UC_Logout
+    }
+    
+    package "Kontrol & Monitoring Pakan" {
+        usecase "UC03: Beri Pakan Manual (Feed Now)" as UC_FeedNow
+        usecase "UC04: Monitoring Status Online & Waktu RTC" as UC_Status
+        usecase "UC05: Lihat Riwayat Log Pakan" as UC_History
+    }
+    
+    package "Manajemen Jadwal Otomatis" {
+        usecase "UC06: Lihat Daftar Jadwal" as UC_ViewSched
+        usecase "UC07: Tambah Slot Jadwal Baru" as UC_AddSched
+        usecase "UC08: Ubah Waktu / Toggle Status Jadwal" as UC_EditSched
+        usecase "UC09: Hapus Slot Jadwal" as UC_DelSched
+        usecase "UC10: Eksekusi Pakan Terjadwal (Otonom)" as UC_ExecSched
+    }
+    
+    package "Kalibrasi Servo & Delay" {
+        usecase "UC11: Atur Sudut Tutup (Close Angle)" as UC_SetClose
+        usecase "UC12: Atur Sudut Buka (Open Angle)" as UC_SetOpen
+        usecase "UC13: Atur Durasi Terbuka (Feed Delay)" as UC_SetDelay
+        usecase "UC14: Lihat Riwayat Kalibrasi Servo" as UC_ServoLogs
+    }
+    
+    package "Konektivitas & Sinkronisasi" {
+        usecase "UC15: Sinkronisasi Jam HP ke DS3231 RTC" as UC_SyncRTC
+        usecase "UC16: Konfigurasi Wi-Fi Mode AP (192.168.4.1)" as UC_APWifi
+        usecase "UC17: Ganti Wi-Fi Jarak Jauh (Mode Server)" as UC_SrvWifi
+        usecase "UC18: Kirim Heartbeat & Poll Command" as UC_HeartbeatPoll
+    }
+}
+
+' Hubungan User
+User --> UC_Login
+User --> UC_Logout
+User --> UC_FeedNow
+User --> UC_Status
+User --> UC_History
+User --> UC_ViewSched
+User --> UC_AddSched
+User --> UC_EditSched
+User --> UC_DelSched
+User --> UC_SetClose
+User --> UC_SetOpen
+User --> UC_SetDelay
+User --> UC_ServoLogs
+User --> UC_SyncRTC
+User --> UC_APWifi
+User --> UC_SrvWifi
+
+' Hubungan Device & RTC
+Device --> UC_HeartbeatPoll
+Device --> UC_ExecSched
+RTC --> UC_ExecSched
+
+UC_AddSched ..> UC_ViewSched : <<include>>
+UC_EditSched ..> UC_ViewSched : <<include>>
+UC_DelSched ..> UC_ViewSched : <<include>>
+
+@enduml

@@ -1,0 +1,71 @@
+@startuml System_Architecture
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle uml2
+skinparam packageBackgroundColor #F8FAFC
+skinparam packageBorderColor #334155
+skinparam nodeBackgroundColor #F1F5F9
+skinparam nodeBorderColor #1E293B
+
+title Arsitektur Sistem Smart Cat Feeder Pro
+
+node "Mobile / Desktop Client" as ClientNode {
+    [Aplikasi Android (Kivy / Python)] as KivyApp
+    component "UI Layer\n(BottomNav + Drawer)" as UILayer
+    component "API Service\n(Requests HTTP)" as HttpService
+    
+    KivyApp --> UILayer
+    UILayer --> HttpService
+}
+
+node "Server Backend (Apache / Laragon)" as ServerNode {
+    package "REST API Services (PHP)" as ApiPackage {
+        [auth.php] as ApiAuth
+        [device_status.php] as ApiStatus
+        [feed.php] as ApiFeed
+        [schedule.php] as ApiSched
+        [servo_settings.php] as ApiServo
+        [command_poll.php] as ApiPoll
+        [command_result.php] as ApiResult
+        [heartbeat.php] as ApiHeartbeat
+        [rtc.php] as ApiRtc
+        [wifi_set.php] as ApiWifi
+    }
+    
+    database "MySQL / MariaDB\n(smart_cat_feeder)" as DatabaseNode {
+        [devices]
+        [device_settings]
+        [settings_logs]
+        [schedules]
+        [feeding_logs]
+        [commands]
+        [android_users]
+    }
+    
+    ApiPackage --> DatabaseNode : PDO Database Connection
+}
+
+node "IoT Hardware Device (Cat Feeder)" as HardwareNode {
+    package "NodeMCU ESP8266 Firmware" as EspPackage {
+        [WiFi Manager & HTTP Client] as EspWifi
+        [Command Polling Engine] as EspPoll
+        [Schedule Checker Engine] as EspSchedEngine
+        [LittleFS Flash Storage] as EspFS
+        [Servo State Machine] as EspServoSM
+    }
+    
+    node "Sensors & Actuators" as ActuatorNode {
+        [DS3231 Real Time Clock (I2C)] as RtcHw
+        [SG90 / MG996R Servo Motor] as ServoHw
+    }
+    
+    EspSchedEngine --> RtcHw : I2C (SDA: D2 / SCL: D1)
+    EspServoSM --> ServoHw : PWM Signal (D5 / GPIO14)
+    EspPackage --> EspFS : Read / Write Config (JSON)
+}
+
+' Interactions
+HttpService --> ApiPackage : HTTP / JSON (Port 80)\n[Bearer Token Auth]
+EspWifi --> ApiPackage : HTTP / JSON (Polling 5s, Heartbeat 10s)\n[Device Header Auth]
+
+@enduml

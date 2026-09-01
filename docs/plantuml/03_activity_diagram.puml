@@ -1,0 +1,64 @@
+@startuml Activity_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+title Activity Diagram: Alur Eksekusi Pakan (Manual & Jadwal Otomatis)
+
+|User (Android App)|
+start
+:Buka Aplikasi & Login;
+if (Pilih Aksi?) then (Feed Now Manual)
+    :Klik tombol "FEED NOW";
+    :Kirim request POST /api/feed.php;
+    |Server Backend (PHP & MySQL)|
+    :Validasi Token Bearer & Device ID;
+    :Insert baris command 'FEED' (status: pending);
+    :Kirim respon 200 OK ke Android;
+    |User (Android App)|
+    :Tampilkan status "Menunggu respon alat...";
+    
+    |NodeMCU ESP8266|
+    :Loop Polling (setiap 5 detik);
+    :Kirim GET /api/command_poll.php;
+    |Server Backend (PHP & MySQL)|
+    :Cari command pending terlama;
+    :Ubah status menjadi 'processing';
+    :Return data command ID & jenis 'FEED';
+    |NodeMCU ESP8266|
+    :Terima perintah 'FEED';
+else (Pakan Terjadwal Otomatis)
+    |NodeMCU ESP8266|
+    :Baca Waktu Sekarang dari Modul DS3231 RTC;
+    :Cek apakah jam & menit cocok dengan slot jadwal LittleFS;
+    if (Waktu Cocok & Belum Diberi Pakan Menit Ini?) then (Ya)
+        :Set trigger pakan terjadwal;
+    else (Tidak)
+        stop
+    endif
+endif
+
+|NodeMCU ESP8266|
+:Mulai Non-Blocking Servo State Machine;
+:Gerakkan Servo ke Sudut Buka (Open Angle);
+:Tunggu durasi pakan (Delay Durasi ms);
+:Gerakkan Servo ke Sudut Tutup (Close Angle);
+:Simpan log eksekusi pakan ke LittleFS (/feedlog.json);
+
+if (Terhubung ke Jaringan Wi-Fi?) then (Ya)
+    :Kirim POST /api/command_result.php (status: success);
+    :Kirim POST /api/device_status.php sync log;
+    |Server Backend (PHP & MySQL)|
+    :Update tabel commands (status: success, executed_at: NOW);
+    :Insert baris baru ke tabel feeding_logs;
+else (Offline)
+    |NodeMCU ESP8266|
+    :Antrekan log pakan di flash LittleFS;
+    :Sync log saat koneksi internet pulih kembali;
+endif
+
+|User (Android App)|
+:Refresh otomatis status & riwayat pakan;
+:Tampilkan badge "✅ Pakan Berhasil Diberikan";
+stop
+
+@enduml

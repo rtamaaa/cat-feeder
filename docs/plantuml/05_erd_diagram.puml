@@ -1,0 +1,94 @@
+@startuml ERD_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam linetype ortho
+
+title Entity Relationship Diagram (ERD) - Database smart_cat_feeder
+
+entity "devices" as dev {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * **device_id** : VARCHAR(50) <<UK>>
+  * device_name : VARCHAR(100)
+  * api_key_hash : VARCHAR(255)
+  last_seen : DATETIME
+  status : ENUM('online','offline','unknown')
+  * created_at : DATETIME
+  * updated_at : DATETIME
+}
+
+entity "android_users" as usr {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * **username** : VARCHAR(50) <<UK>>
+  * password_hash : VARCHAR(255)
+  api_token : VARCHAR(64)
+  token_expires : DATETIME
+  * device_id : VARCHAR(50) <<FK>>
+  * created_at : DATETIME
+}
+
+entity "device_settings" as stg {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * **device_id** : VARCHAR(50) <<FK, UK>>
+  * close_angle : SMALLINT UNSIGNED
+  * open_angle : SMALLINT UNSIGNED
+  * duration_ms : INT UNSIGNED
+  * updated_at : DATETIME
+}
+
+entity "settings_logs" as slog {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * device_id : VARCHAR(50) <<FK>>
+  * close_angle : SMALLINT UNSIGNED
+  * open_angle : SMALLINT UNSIGNED
+  * duration_ms : INT UNSIGNED
+  * changed_by : VARCHAR(50)
+  * created_at : DATETIME
+}
+
+entity "schedules" as sch {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * device_id : VARCHAR(50) <<FK>>
+  * slot : TINYINT UNSIGNED
+  * enabled : TINYINT(1)
+  * hour : TINYINT UNSIGNED
+  * minute : TINYINT UNSIGNED
+  * updated_at : DATETIME
+}
+
+entity "commands" as cmd {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * device_id : VARCHAR(50) <<FK>>
+  * command : VARCHAR(50)
+  payload : JSON
+  * status : ENUM('pending','processing','success','failed')
+  * created_at : DATETIME
+  executed_at : DATETIME
+}
+
+entity "feeding_logs" as flog {
+  * **id** : INT <<PK, AUTO_INCREMENT>>
+  --
+  * device_id : VARCHAR(50) <<FK>>
+  * type : ENUM('manual','schedule')
+  schedule_slot : TINYINT UNSIGNED
+  * status : ENUM('success','failed')
+  * executed_at : DATETIME
+  * synced : TINYINT(1)
+  * created_at : DATETIME
+}
+
+' Relasi Antar Tabel
+dev ||--o{ usr : "1 to N\n(memiliki user pengendali)"
+dev ||--|| stg : "1 to 1\n(memiliki konfigurasi servo)"
+dev ||--o{ slog : "1 to N\n(memiliki audit trail servo)"
+dev ||--o{ sch : "1 to N\n(memiliki slot jadwal)"
+dev ||--o{ cmd : "1 to N\n(menerima antrean command)"
+dev ||--o{ flog : "1 to N\n(merekam riwayat pakan)"
+
+@enduml

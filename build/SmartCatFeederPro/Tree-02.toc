@@ -1,0 +1,13 @@
+('C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\share\\angle\\bin',
+ None,
+ [],
+ 'DATA',
+ [('d3dcompiler_47.dll',
+   'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\share\\angle\\bin\\d3dcompiler_47.dll',
+   'DATA'),
+  ('libEGL.dll',
+   'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\share\\angle\\bin\\libEGL.dll',
+   'DATA'),
+  ('libGLESv2.dll',
+   'C:\\Users\\LENOVO\\AppData\\Local\\Programs\\Python\\Python313\\share\\angle\\bin\\libGLESv2.dll',
+   'DATA')])

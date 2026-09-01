@@ -1,0 +1,70 @@
+@startuml State_Machine_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+title State Machine Diagram: Firmware ESP8266 (Servo Non-Blocking & WiFi Lifecycle)
+
+state "Servo Feeding State Machine" as ServoSM {
+    [*] --> FEED_IDLE
+    
+    FEED_IDLE --> FEED_OPENING : startFeeding(slot)\n[Trigger Manual / Jadwal Cocok]
+    
+    state FEED_OPENING {
+        FEED_OPENING : Entry: servoMoveTo(servoOpenAngle)
+        FEED_OPENING : Gerakkan motor ke sudut buka
+    }
+    
+    FEED_OPENING --> FEED_HOLDING : setelah SERVO_SETTLE (400ms)
+    
+    state FEED_HOLDING {
+        FEED_HOLDING : Katup terbuka penuh
+        FEED_HOLDING : Makanan kucing mengalir keluar
+    }
+    
+    FEED_HOLDING --> FEED_CLOSING : setelah feedDurationMs (misal 2000ms)
+    
+    state FEED_CLOSING {
+        FEED_CLOSING : Entry: servoMoveTo(servoCloseAngle)
+        FEED_CLOSING : Gerakkan motor ke sudut tutup rapat
+    }
+    
+    FEED_CLOSING --> FEED_SETTLING : setelah SERVO_SETTLE (400ms)
+    
+    state FEED_SETTLING {
+        FEED_SETTLING : Simpan riwayat ke LittleFS
+        FEED_SETTLING : Update lastFedDay slot jadwal
+    }
+    
+    FEED_SETTLING --> FEED_IDLE : Selesai, siap untuk siklus berikutnya
+}
+
+--
+
+state "WiFi Connectivity State Machine" as WifiSM {
+    [*] --> STATE_CONNECTING : Boot / Restart
+    
+    state STATE_CONNECTING {
+        STATE_CONNECTING : Coba koneksi ke SSID tersimpan
+        STATE_CONNECTING : Timeout 20 detik
+    }
+    
+    STATE_CONNECTING --> STATE_CONNECTED : Sukses Dapat IP LAN
+    STATE_CONNECTING --> STATE_AP_MODE : Gagal / Kredensial Kosong
+    
+    state STATE_CONNECTED {
+        STATE_CONNECTED : Kirim Heartbeat (tiap 10s)
+        STATE_CONNECTED : Polling Command (tiap 5s)
+        STATE_CONNECTED : Sync Log Offline (tiap 2m)
+    }
+    
+    state STATE_AP_MODE {
+        STATE_AP_MODE : Buat Hotspot 'CatFeeder-Setup'
+        STATE_AP_MODE : IP Web Server: 192.168.4.1
+        STATE_AP_MODE : Terima POST /wifi dari HP
+    }
+    
+    STATE_CONNECTED --> STATE_CONNECTING : Koneksi Terputus (WiFi.status != WL_CONNECTED)
+    STATE_AP_MODE --> STATE_CONNECTING : Kredensial Baru Diterima -> Simpan ke Flash & Restart
+}
+
+@enduml

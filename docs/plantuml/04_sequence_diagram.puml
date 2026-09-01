@@ -1,0 +1,65 @@
+@startuml Sequence_Diagram
+!theme plain
+skinparam backgroundColor #FFFFFF
+autonumber
+
+title Sequence Diagram: End-to-End Feed Now, Command Polling & Execution
+
+actor "User" as User
+participant "Android App\n(Kivy)" as App
+participant "Backend API\n(PHP)" as Api
+database "MySQL\nDatabase" as DB
+participant "NodeMCU ESP8266\n(Firmware)" as ESP
+participant "DS3231 RTC\n(I2C Sensor)" as RTC
+participant "Servo SG90\n(Actuator)" as Servo
+
+== 1. Autentikasi Pengguna ==
+User -> App : Masukkan Username & Password
+App -> Api : POST /api/auth.php?action=login\n{username, password}
+Api -> DB : SELECT * FROM android_users WHERE username = ?
+DB --> Api : Return hash password & user data
+Api -> Api : Verify password_hash & generate API Token
+Api -> DB : UPDATE android_users SET api_token, expires_at
+Api --> App : 200 OK {token, expires_at, device_id}
+App -> App : Simpan sesi ke session.json & Buka Dashboard
+
+== 2. Pengiriman Perintah Pakan (Feed Now) ==
+User -> App : Klik Tombol "🍖 FEED NOW"
+App -> Api : POST /api/feed.php\nHeader: Bearer <token>\nBody: {device_id: "CAT_FEEDER_01"}
+Api -> DB : SELECT status FROM devices WHERE device_id = ?
+Api -> DB : INSERT INTO commands (device_id, command, status)\nVALUES ('CAT_FEEDER_01', 'FEED', 'pending')
+DB --> Api : Return command_id: 31
+Api --> App : 200 OK {success: true, command_id: 31}
+App --> User : Update status: "Menunggu alat mengeksekusi..."
+
+== 3. Polling Perintah oleh ESP8266 ==
+loop Setiap 5 Detik (Non-blocking Timer)
+    ESP -> Api : GET /api/command_poll.php\nHeaders: X-Device-Id, X-Device-Token
+    Api -> DB : SELECT * FROM commands WHERE device_id = ? AND status = 'pending' LIMIT 1
+    DB --> Api : Return row (command_id: 31, command: 'FEED')
+    Api -> DB : UPDATE commands SET status = 'processing' WHERE id = 31
+    Api --> ESP : 200 OK {command_id: 31, command: 'FEED'}
+end
+
+== 4. Eksekusi Pergerakan Servo ==
+ESP -> RTC : Baca waktu real-time (I2C)
+RTC --> ESP : 2026-09-01 12:30:00
+ESP -> Servo : write(servoOpenAngle: 90°)
+ESP -> ESP : Non-blocking delay (feedDurationMs: 2000ms)
+ESP -> Servo : write(servoCloseAngle: 0°)
+ESP -> ESP : Catat log ke LittleFS (/feedlog.json)
+
+== 5. Pelaporan Status Eksekusi (Result Callback) ==
+ESP -> Api : POST /api/command_result.php\nBody: {command_id: 31, status: "success", executed_at: "2026-09-01 12:30:02"}
+Api -> DB : UPDATE commands SET status = 'success', executed_at = NOW() WHERE id = 31
+Api -> DB : INSERT INTO feeding_logs (device_id, type, status, executed_at)\nVALUES ('CAT_FEEDER_01', 'manual', 'success', NOW())
+Api --> ESP : 200 OK {success: true}
+
+== 6. Update Real-Time Tampilan Aplikasi ==
+App -> Api : GET /api/device_status.php?action=status
+Api -> DB : Query status device, last_seen, last_feeding
+DB --> Api : Data status terbaru
+Api --> App : 200 OK {status: "online", last_feeding: {...}}
+App --> User : Tampilkan badge "✅ Pakan Berhasil Diberikan"
+
+@enduml
