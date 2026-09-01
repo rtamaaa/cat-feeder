@@ -84,7 +84,7 @@ Pakan-kucing/
 4. Konfigurasi default di `app/backend/config/database.php`:
    - Database: `smart_cat_feeder`
    - User: `catfeeder_user` (atau `root`)
-   - Pass: `bukalah11`
+   - Pass: `(sesuaikan dengan passwordmu)`
    - Timezone: `Asia/Jakarta` (WIB)
 
 ### 2. Firmware NodeMCU ESP8266 (Arduino IDE)
