@@ -1,137 +1,93 @@
-# 🐱 Smart Cat Feeder Pro (IoT + Android App) 🐾
+# 🐱 Smart Cat Feeder Pro (IoT + Web Admin Portal) 🐾
 
-Sistem otomatisasi pakan kucing berbasis **NodeMCU ESP8266**, modul RTC presisi **DS3231**, motor servo **SG90 / MG996R**, **REST API Backend (PHP & MySQL)**, dan **Aplikasi Android / Desktop (Python + Kivy)**.
+Sistem otomatisasi pakan kucing pintar berbasis **NodeMCU ESP8266**, pewaktu presisi **DS3231 RTC**, katup pakan **Motor Servo SG90/MG996R**, **REST API Backend (PHP & MySQL)**, dan **Web Portal Administrator Modern**.
 
 ---
 
-## 📁 Struktur Folder Project
+## 📁 Struktur Bersih & Terorganisir Proyek
 
 ```text
 Pakan-kucing/
 ├── README.md                           # Panduan lengkap instalasi & deployment
 ├── PRD_SmartCatFeeder.md               # Product Requirements Document & arsitektur sistem
-├── start_app.bat                       # Launcher 1-klik aplikasi di Windows
-├── .gitignore                          # Filter git untuk build artifacts & log
+├── start_app.bat                       # Launcher 1-klik Web Dashboard di Windows
+├── .gitignore                          # Filter git untuk file sementara & log
 │
 ├── docs/                               # 📚 [DOKUMENTASI & DESAIN SISTEM]
-│   ├── UML_DOCUMENTATION.md            # Dokumentasi UML (Use Case, Activity, Sequence, ERD, Class)
+│   ├── UML_DOCUMENTATION.md            # Dokumentasi UML (Use Case, Activity, Sequence, ERD, Class, Pinout)
 │   ├── AAPANEL_DEPLOYMENT_GUIDE.md     # Panduan Deploy Backend ke VPS / aaPanel (SSL & Nginx)
 │   └── plantuml/                       # File mentah diagram (.puml)
 │
 ├── app/                                # 🚀 [PRODUCTION CORE APPS]
-│   ├── frontend/                       # 📱 Aplikasi Android / Desktop (Python Kivy)
-│   │   ├── main.py                     # Kode utama UI (Bottom Nav, Left Drawer, Emoticon support)
-│   │   ├── requirements.txt            # Library Python (kivy, requests, certifi, urllib3)
-│   │   └── buildozer.spec              # Konfigurasi build APK Android (API 33 ready)
 │   │
-│   ├── backend/                        # 🌐 REST API Backend (PHP & MySQL)
-│   │   ├── api/                        # Endpoint REST API JSON
-│   │   │   ├── auth.php                # Autentikasi token user Android
-│   │   │   ├── device_status.php       # Status online/offline & feeding history
-│   │   │   ├── servo_settings.php      # Get/Set sudut & delay servo, serta audit logs
-│   │   │   ├── schedule.php            # Manajemen jadwal dinamis (hingga 6 slot)
-│   │   │   ├── heartbeat.php           # Heartbeat dari ESP8266 ke server
+│   ├── frontend/                       # 🌐 Web Administrator Portal (HTML5 / Vanilla CSS / JS)
+│   │   └── index.html                  # Dashboard Admin, Live Telemetry, Feed Controller & Log Table
+│   │
+│   ├── backend/                        # ⚙️ REST API Backend (PHP & MySQL)
+│   │   ├── index.html                  # Web portal copy untuk root web server
+│   │   ├── api/                        # 10 Endpoint REST API JSON
+│   │   │   ├── auth.php                # Autentikasi token user / admin
+│   │   │   ├── device_status.php       # Telemetri online/offline & feeding log
+│   │   │   ├── servo_settings.php      # Kalibrasi sudut & delay servo + audit log
+│   │   │   ├── schedule.php            # Manajemen slot jadwal dinamis (hingga 6 slot)
+│   │   │   ├── heartbeat.php           # Heartbeat berkala ESP8266 ke server
 │   │   │   ├── command_poll.php        # Polling antrean command oleh ESP8266
 │   │   │   ├── command_result.php      # Laporan hasil eksekusi command oleh ESP8266
 │   │   │   ├── feed.php                # Trigger pakan instan (FEED NOW)
 │   │   │   ├── rtc.php                 # Sinkronisasi waktu RTC DS3231
-│   │   │   └── wifi_set.php            # Pengaturan remote WiFi ESP8266
+│   │   │   └── wifi_set.php            # Pengaturan jarak jauh WiFi ESP8266
 │   │   ├── config/
 │   │   │   └── database.php            # Konfigurasi PDO MySQL, timezone, CORS & rate limiter
 │   │   ├── database/
-│   │   │   └── schema.sql              # Schema DDL lengkap 6 tabel & seed data awal
+│   │   │   └── schema.sql              # Schema DDL lengkap 7 tabel database
 │   │   ├── setup.php                   # Installer 1-klik database & tabel MySQL
-│   │   └── .htaccess                   # Header & security rewrite
+│   │   └── .htaccess                   # Konfigurasi Apache & Authorization header
 │   │
-│   └── nodemcu/                        # 🤖 Firmware Production ESP8266 (Arduino IDE)
-│       └── nodemcu.ino                 # Polling command, heartbeat, dynamic servo, LittleFS, RTC
+│   └── nodemcu/                        # 🤖 Firmware Production ESP8266 (Arduino C++)
+│       └── nodemcu.ino                 # Firmware non-blocking: Polling, Heartbeat, LittleFS, RTC & Servo
 │
 └── steps/                              # 🧪 [MODULAR TESTING & PROTOTYPING]
-    ├── step1_rtc_test/                 # Uji coba pembacaan waktu modul DS3231 RTC via I2C
-    │   └── step1_rtc_test.ino
-    ├── step2_servo_test/               # Uji coba pergerakan Servo non-blocking
-    │   └── step2_servo_test.ino
-    ├── step3_schedule_littlefs/        # Uji coba persistensi jadwal di chip flash LittleFS
-    │   └── step3_schedule_littlefs.ino
-    └── step4_wifi/                     # Uji coba AP Mode Setup (192.168.4.1) & Auto Reconnect
-        └── step4_wifi.ino
+    ├── step1_rtc_test/                 # Pengujian modul DS3231 RTC via I2C
+    ├── step2_servo_test/               # Pengujian gerak servo non-blocking
+    ├── step3_schedule_littlefs/        # Pengujian persistensi LittleFS Flash
+    └── step4_wifi/                     # Pengujian AP Mode Provisioning (192.168.4.1)
 ```
 
 ---
 
 ## ⚡ Skema Rangkaian Hardware (Pinout)
 
-| Komponen | Pin Modul | Pin NodeMCU ESP8266 | Keterangan |
+| Komponen Hardware | Pin Modul | Pin NodeMCU ESP8266 | Deskripsi / Fungsi |
 |---|---|---|---|
-| **DS3231 RTC** | SDA | `D2` (GPIO 4) | Komunikasi I2C Data |
-| | SCL | `D1` (GPIO 5) | Komunikasi I2C Clock |
-| | VCC | `3.3V` / `5V` (Vin) | Daya RTC |
-| | GND | `GND` | Ground |
-| **Servo Motor** | Signal (Kuning/Oranye) | `D5` (GPIO 14) | PWM Control |
-| | VCC (Merah) | `Vin` (5V eksternal) | Daya Servo |
-| | GND (Cokelat/Hitam) | `GND` | Common Ground dengan ESP |
+| **DS3231 RTC** | `SDA` | `D2` (GPIO 4) | Jalur Data Serial I2C |
+| | `SCL` | `D1` (GPIO 5) | Jalur Clock Serial I2C |
+| | `VCC` | `3.3V` / `5V` (Vin) | Catu Daya Modul RTC |
+| | `GND` | `GND` | Ground Bersama |
+| **Motor Servo (SG90 / MG996R)** | `Signal` (Kuning/Oranye) | `D5` (GPIO 14) | Sinyal Kontrol PWM Sudut Servo |
+| | `VCC` (Merah) | `Vin` (5V eksternal) | Catu Daya Motor Servo |
+| | `GND` (Cokelat/Hitam) | `GND` | Common Ground dengan ESP |
 
 ---
 
-## 🚀 Panduan Deployment & Instalasi
+## 🚀 Panduan Menjalankan Sistem
 
-### 1. Backend REST API (Laragon / Web Server)
-1. Buka Laragon atau server Apache + MySQL Anda.
+### 1. Menjalankan Frontend Web Dashboard
+* Cukup klik ganda file **`start_app.bat`** di folder utama, atau buka file:
+  👉 **`app/frontend/index.html`** langsung di browser Anda.
+* Dashboard otomatis terhubung ke cloud server: `https://catfeeder.tamamici.my.id`.
+
+### 2. Backend REST API (Laragon / Web Server)
+1. Buka Laragon atau server Apache + MySQL.
 2. Tempatkan isi folder `app/backend` ke dalam web root:
    - Path Windows: `C:\laragon\www\smart-cat-feeder`
-3. Buka browser dan jalankan setup otomatis:
+3. Akses installer otomatis di browser:
    👉 `http://localhost/smart-cat-feeder/setup.php`
-4. Konfigurasi default di `app/backend/config/database.php`:
-   - Database: `smart_cat_feeder`
-   - User: `catfeeder_user` (atau `root`)
-   - Pass: `(sesuaikan dengan passwordmu)`
-   - Timezone: `Asia/Jakarta` (WIB)
 
-### 2. Firmware NodeMCU ESP8266 (Arduino IDE)
-1. Buka Arduino IDE.
-2. Buka file:
-   👉 `app/nodemcu/nodemcu.ino`
-3. Pastikan library terpasang:
+### 3. Firmware NodeMCU ESP8266 (Arduino IDE)
+1. Buka Arduino IDE > buka file `app/nodemcu/nodemcu.ino`.
+2. Library yang dibutuhkan:
    - `RTClib` (by Adafruit)
    - `Servo` (bawaan ESP8266)
    - `ArduinoJson` (v6.x)
    - `LittleFS`
-4. Sesuaikan `SERVER_HOST` dengan IP Laptop/Server Anda (contoh: `192.168.0.101`).
-5. Upload ke board **NodeMCU 1.0 (ESP-12E Module)**.
-
-### 3. Aplikasi Frontend Mobile / Desktop (Python + Kivy)
-#### Menjalankan di Komputer / Laptop:
-1. Pastikan Python 3.9 - 3.13 terpasang.
-2. Install dependensi:
-   ```bash
-   pip install -r app/frontend/requirements.txt
-   ```
-3. Jalankan aplikasi:
-   - Klik ganda file `start_app.bat`, atau
-   - Ketik di terminal:
-     ```bash
-     python app/frontend/main.py
-     ```
-4. Login default:
-   - **Username:** `admin`
-   - **Password:** `bukalah11`
-
-#### Build Menjadi File APK Android:
-Gunakan Linux / WSL / Google Colab dengan tool Buildozer:
-```bash
-cd app/frontend
-buildozer -v android debug
-```
-File APK siap instal akan berada di folder `app/frontend/bin/`.
-
----
-
-## 📋 Fitur Utama Sistem
-
-- 🍖 **FEED NOW (Instan):** Kasih pakan kucing langsung dari aplikasi secara *real-time*.
-- ⏰ **Jadwal Dinamis:** Tambah/hapus hingga 6 slot jadwal makan otomatis (tersimpan di LittleFS ESP8266 & dijalankan mandiri oleh RTC DS3231 walau internet terputus).
-- ⚙️ **Kalibrasi Servo Fleksibel:** Pengaturan sudut tutup (`0°-180°`), sudut buka (`0°-180°`), dan durasi delay porsi pakan langsung dari slider aplikasi.
-- 📜 **Audit Trail & Riwayat:** Log pemberian pakan dan riwayat perubahan kalibrasi servo tercatat lengkap dengan timestamp.
-- 🕒 **Sinkronisasi RTC:** Selaraskan jam modul RTC DS3231 ke waktu jam HP hanya dengan 1 klik.
-- 📡 **Manajemen Wi-Fi Ganda:** Mode AP Hotspot (`CatFeeder-Setup` @ `192.168.4.1`) untuk konfigurasi awal + Mode Remote untuk ganti Wi-Fi jarak jauh via server.
-- 🎨 **UI/UX Modern:** Tema Dark Glassmorphism, Bottom Navigation Bar, Left Drawer, dan dukungan ikon emoji penuh.
+3. Pilih board **NodeMCU 1.0 (ESP-12E Module)** > klik **Upload**.

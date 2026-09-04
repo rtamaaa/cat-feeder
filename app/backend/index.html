@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Cat Feeder Pro - Admin Portal 🐾</title>
+<meta name="description" content="Professional IoT Cat Feeder Management Portal">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg-main: #070C18;
+    --bg-surface: #0E172A;
+    --bg-card: #131F37;
+    --bg-card-hover: #182846;
+    --bg-sidebar: #091022;
+    --border: #1E2E4E;
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-focus: #3B82F6;
+    
+    --primary: #3B82F6;
+    --primary-glow: rgba(59, 130, 246, 0.25);
+    --primary-dark: #2563EB;
+    --accent-cyan: #06B6D4;
+    --success: #10B981;
+    --success-glow: rgba(16, 185, 129, 0.2);
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --purple: #8B5CF6;
+    
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+    line-height: 1.5;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  /* App Container Layout */
+  #app {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* --- LOGIN SCREEN (Professional Portal) --- */
+  #screen-login {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    background: radial-gradient(circle at top right, #1a284e 0%, #070c18 60%);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow-y: auto;
+  }
+  #screen-login.active { display: flex; }
+
+  .login-box {
+    width: 100%;
+    max-width: 440px;
+    background: rgba(14, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 36px 32px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), var(--shadow-glow);
+    animation: slideUp 0.35s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .login-brand {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .login-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.5);
+    margin-bottom: 12px;
+  }
+  .login-brand h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #fff;
+  }
+  .login-brand p {
+    font-size: 13px;
+    color: var(--accent-cyan);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  .auth-mode-switch {
+    display: flex;
+    background: #091022;
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .auth-mode-switch button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+  }
+  .auth-mode-switch button.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  .auth-mode-switch button.active-green {
+    background: var(--success);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    background: #091022;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: var(--text-main);
+    outline: none;
+    transition: var(--transition);
+  }
+  .form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background: #0d152b;
+  }
+  .form-input::placeholder { color: var(--text-dim); }
+
+  /* --- MAIN ADMIN PORTAL LAYOUT --- */
+  #screen-main {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    flex-direction: row;
+  }
+  #screen-main.active { display: flex; }
+
+  /* Sidebar */
+  #admin-sidebar {
+    width: 260px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 40;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-header {
+    padding: 22px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 6px 15px -3px rgba(59, 130, 246, 0.4);
+    flex-shrink: 0;
+  }
+  .sidebar-brand-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+  .sidebar-brand-sub {
+    font-size: 11px;
+    color: var(--accent-cyan);
+    font-weight: 600;
+  }
+
+  .sidebar-menu {
+    flex: 1;
+    padding: 16px 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .menu-category {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    letter-spacing: 0.8px;
+    padding: 8px 12px 4px;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+    width: 100%;
+  }
+  .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+  }
+  .nav-btn.active {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+    border-left: 3px solid var(--primary);
+    color: #60A5FA;
+    font-weight: 700;
+  }
+  .nav-btn .icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+    background: #060a16;
+  }
+  .user-profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 4px 6px;
+  }
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #10B981, #059669);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .user-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .user-dev {
+    font-size: 10.5px;
+    color: var(--accent-cyan);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .btn-logout {
+    width: 100%;
+    padding: 9px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-logout:hover {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  /* Main Body Content */
+  .admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-main);
+  }
+
+  /* Topbar */
+  .admin-topbar {
+    height: 64px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    flex-shrink: 0;
+    z-index: 20;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .btn-toggle-sidebar {
+    display: none;
+    width: 38px;
+    height: 38px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: 18px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+  .topbar-page-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .badge-telemetry {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .badge-telemetry.online {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .badge-telemetry.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .badge-telemetry.offline {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .badge-telemetry.loading {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--accent-cyan);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  .dot-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    box-shadow: 0 0 8px currentColor;
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .btn-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+  }
+  .btn-icon:hover {
+    background: var(--bg-card-hover);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .btn-icon.spin { animation: spin 0.6s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Content Wrapper */
+  .admin-content-viewport {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Cards & Grid System */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  .admin-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+  }
+  .admin-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .admin-card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .admin-card-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* Metric Stat Card */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition);
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59, 130, 246, 0.4);
+    box-shadow: var(--shadow-glow);
+  }
+  .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .stat-icon-blue { background: rgba(59, 130, 246, 0.15); color: #60A5FA; }
+  .stat-icon-green { background: rgba(16, 185, 129, 0.15); color: #34D399; }
+  .stat-icon-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; }
+  .stat-icon-purple { background: rgba(139, 92, 246, 0.15); color: #A78BFA; }
+  .stat-info { flex: 1; min-width: 0; }
+  .stat-label { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px; }
+
+  /* Hero Feed Control Section */
+  .hero-feed-banner {
+    background: linear-gradient(135deg, #101c36 0%, #0d162c 100%);
+    border: 1.5px solid rgba(245, 158, 11, 0.35);
+    border-radius: var(--radius-xl);
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 15px 35px -5px rgba(245, 158, 11, 0.15);
+  }
+  .feed-action-btn {
+    width: 100%;
+    max-width: 460px;
+    height: 72px;
+    background: linear-gradient(135deg, #D97706, #F59E0B);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: #070C18;
+    font-size: 18px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 12px 25px -4px rgba(245, 158, 11, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: var(--transition);
+    letter-spacing: 0.3px;
+  }
+  .feed-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px -4px rgba(245, 158, 11, 0.6);
+    filter: brightness(1.05);
+  }
+  .feed-action-btn:active {
+    transform: scale(0.98);
+  }
+
+  .quick-action-bar {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    width: 100%;
+    max-width: 460px;
+  }
+  .btn-quick {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 12.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+  }
+  .btn-quick:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--primary);
+    color: #60A5FA;
+  }
+
+  /* Table Styles */
+  .admin-table-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  .admin-table th {
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-dim);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-muted);
+  }
+  .admin-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+    color: #fff;
+  }
+
+  /* Sliders & Servo */
+  .slider-box {
+    background: #091022;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .slider-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .slider-name { font-size: 13px; font-weight: 700; }
+  .slider-badge {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(to right, var(--primary) 0%, var(--primary) var(--pct, 50%), #1E2E4E var(--pct, 50%), #1E2E4E 100%);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 3px solid #fff;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  /* Schedule Slots Grid */
+  .slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .slot-card {
+    background: #091022;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--transition);
+  }
+  .slot-card.disabled {
+    opacity: 0.6;
+    background: #060a16;
+  }
+  .slot-toggle-pill {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    font-family: inherit;
+    transition: var(--transition);
+  }
+  .slot-toggle-pill.on { background: var(--success); }
+  .slot-toggle-pill.off { background: var(--border); color: var(--text-dim); }
+  
+  .time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #040813;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .time-digit {
+    width: 44px;
+    background: transparent;
+    border: none;
+    text-align: center;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    font-family: inherit;
+    outline: none;
+  }
+  .time-sep { font-size: 18px; font-weight: 800; color: var(--text-dim); }
+  .btn-del-slot {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 14px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-del-slot:hover { background: var(--danger); color: #fff; }
+
+  /* Action Buttons */
+  .btn-solid {
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-size: 13.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+    width: 100%;
+  }
+  .btn-solid:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn-solid:active { transform: scale(0.98); }
+  .btn-blue { background: var(--primary); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.35); }
+  .btn-green { background: var(--success); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35); }
+
+  /* WiFi Mode Cards */
+  .mode-switch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .mode-card-btn {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1.5px solid var(--border);
+    background: #091022;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: var(--transition);
+  }
+  .mode-card-btn h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .mode-card-btn p { font-size: 11.5px; color: var(--text-dim); }
+  .mode-card-btn.active-green {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+  }
+  .mode-card-btn.active-green h4 { color: var(--success); }
+  .mode-card-btn.active-blue {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.08);
+  }
+  .mode-card-btn.active-blue h4 { color: #60A5FA; }
+
+  /* Message Toast Banner */
+  .msg-banner {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 10px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: var(--transition);
+  }
+  .msg-banner:empty { display: none; }
+  .msg-banner.ok { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+  .msg-banner.err { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+  .msg-banner.info { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+  /* Screens / Tabs Display */
+  .portal-screen { display: none; }
+  .portal-screen.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Bottom Navigation for Mobile */
+  .mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+    z-index: 50;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .mobile-nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .mobile-nav-tab.active { color: var(--primary); }
+  .mobile-nav-tab .icon { font-size: 18px; }
+
+  /* Mobile Drawer Overlay */
+  #drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 35;
+  }
+  #drawer-overlay.open { display: block; }
+
+  /* Responsive Rules */
+  @media (max-width: 900px) {
+    #admin-sidebar {
+      position: fixed;
+      left: -260px;
+      top: 0;
+      bottom: 0;
+    }
+    #admin-sidebar.open { left: 0; }
+    .btn-toggle-sidebar { display: flex; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .mobile-bottom-nav { display: flex; }
+    .admin-content-viewport { padding-bottom: 80px; }
+  }
+  @media (max-width: 600px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .mode-switch-grid { grid-template-columns: 1fr; }
+    .admin-topbar { padding: 0 16px; }
+    .admin-content-viewport { padding: 16px 16px 80px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ========================================== -->
+  <!-- 1. AUTH / LOGIN / REGISTER PORTAL -->
+  <!-- ========================================== -->
+  <div id="screen-login" class="portal-screen active">
+    <div class="login-box">
+      <div class="login-brand">
+        <div class="login-logo">🐱</div>
+        <h1>Smart Cat Feeder Pro</h1>
+        <p>✨ Administrator IoT IoT Portal</p>
+      </div>
+
+      <div class="auth-mode-switch">
+        <button id="btn-mode-login" class="active" onclick="setLoginMode(false)">🔑 Masuk</button>
+        <button id="btn-mode-reg" onclick="setLoginMode(true)">📝 Daftar Akun Baru</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🌐 Alamat Cloud Server (API URL)</label>
+        <input id="inp-server" class="form-input" type="url" placeholder="https://catfeeder.tamamici.my.id" value="https://catfeeder.tamamici.my.id">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">👤 Username</label>
+        <input id="inp-user" class="form-input" type="text" placeholder="Masukkan username" value="admin">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🔑 Password</label>
+        <input id="inp-pass" class="form-input" type="password" placeholder="••••••••">
+      </div>
+
+      <div id="reg-extra" class="form-group" style="display:none">
+        <label class="form-label">📡 Device ID Feeder</label>
+        <input id="inp-dev" class="form-input" type="text" value="CAT_FEEDER_01" placeholder="CAT_FEEDER_01">
+      </div>
+
+      <button id="btn-auth" class="btn-solid btn-blue" onclick="doAuth()" style="margin-top: 10px; height: 46px;">
+        🚀 &nbsp; MASUK KE SISTEM
+      </button>
+
+      <div id="login-msg" class="msg-banner"></div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- 2. MAIN PRO ADMINISTRATOR PORTAL -->
+  <!-- ========================================== -->
+  <div id="screen-main" class="portal-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside id="admin-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">🐱</div>
+        <div>
+          <div class="sidebar-brand-title">CatFeeder Pro</div>
+          <div class="sidebar-brand-sub">IoT Administration</div>
+        </div>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="menu-category">Menu Utama</div>
+        <button class="nav-btn active" id="di-dash" onclick="goPage('dash')">
+          <span class="icon">📊</span>
+          <span>Dashboard Feeder</span>
+        </button>
+        <button class="nav-btn" id="di-sched" onclick="goPage('sched')">
+          <span class="icon">⏰</span>
+          <span>Jadwal Otomatis</span>
+        </button>
+        <button class="nav-btn" id="di-servo" onclick="goPage('servo')">
+          <span class="icon">⚙️</span>
+          <span>Kalibrasi Servo</span>
+        </button>
+        <button class="nav-btn" id="di-hist" onclick="goPage('hist')">
+          <span class="icon">📜</span>
+          <span>Log & Riwayat</span>
+        </button>
+
+        <div class="menu-category" style="margin-top: 10px;">Konektivitas</div>
+        <button class="nav-btn" id="di-wifi" onclick="goPage('wifi')">
+          <span class="icon">📡</span>
+          <span>Koneksi Wi-Fi</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-badge">
+          <div class="user-avatar" id="user-initial">A</div>
+          <div class="user-info">
+            <div class="user-name" id="drawer-user">Admin User</div>
+            <div class="user-dev" id="drawer-dev">Device: CAT_FEEDER_01</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">
+          <span>🚪</span> Keluar (Logout)
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content Viewport -->
+    <div class="admin-main">
+
+      <!-- Topbar Header -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="btn-toggle-sidebar" onclick="toggleSidebar()">☰</button>
+          <div class="topbar-page-title" id="topbar-title">📊 Dashboard Feeder</div>
+        </div>
+
+        <div class="topbar-right">
+          <span id="dash-badge" class="badge-telemetry loading">
+            <span class="dot-pulse"></span>
+            <span id="dash-badge-text">MEMERIKSA...</span>
+          </span>
+          <button class="btn-icon" id="topbar-refresh" onclick="refreshPage()" title="Refresh Data">🔄</button>
+        </div>
+      </header>
+
+      <!-- Scrollable Main Viewport -->
+      <main class="admin-content-viewport">
+        <div class="content-container">
+
+          <!-- ================= PAGE: DASHBOARD ================= -->
+          <section id="page-dash" class="portal-screen active">
+            <!-- Stat Cards Row -->
+            <div class="grid-4" style="margin-bottom: 20px;">
+              <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-blue">📡</div>
+                <div class="stat-info">
+                  <div class="stat-label">Status Perangkat</div>
+                  <div class="stat-value" id="stat-status">-</div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-purple">🕒</div>
+                <div class="stat-info">
+                  <div class="stat-label">DS3231 RTC Clock</div>
+                  <div class="stat-value" id="dash-rtc" style="font-size:15px">-</div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-green">⏱️</div>
+                <div class="stat-info">
+                  <div class="stat-label">Terakhir Aktif</div>
+                  <div class="stat-value" id="dash-lastseen" style="font-size:15px">-</div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-amber">🍗</div>
+                <div class="stat-info">
+                  <div class="stat-label">Pakan Terakhir</div>
+                  <div class="stat-value" id="dash-lastfeed" style="font-size:14px">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hero Action Banner -->
+            <div class="hero-feed-banner" style="margin-bottom: 20px;">
+              <button class="feed-action-btn" onclick="sendFeed()">
+                <span>🍖</span>
+                <span>KASIH PAKAN SEKARANG (FEED NOW)</span>
+                <span>🐾</span>
+              </button>
+              
+              <div class="quick-action-bar">
+                <button class="btn-quick" onclick="syncRtc()">🕒 Sync Jam RTC DS3231</button>
+                <button class="btn-quick" onclick="goPage('wifi')">📶 Setup Wi-Fi ESP</button>
+              </div>
+
+              <div id="dash-feedmsg" class="msg-banner"></div>
+            </div>
+
+            <!-- Recent Feed Logs Table Card -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <div class="admin-card-title">📋 Riwayat Pakan Terkini</div>
+                  <div class="admin-card-subtitle">Log aktivitas pemberian pakan otomatis dan manual</div>
+                </div>
+                <button class="btn-quick" style="padding: 6px 12px; width: auto;" onclick="fetchDashLog()">🔄 Segarkan</button>
+              </div>
+
+              <div class="admin-table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Waktu Eksekusi</th>
+                      <th>Tipe Pemberian</th>
+                      <th>Keterangan</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dash-log-tbody">
+                    <tr><td colspan="4" style="text-align:center; padding: 20px;">Memuat riwayat pakan...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- ================= PAGE: SCHEDULES ================= -->
+          <section id="page-sched" class="portal-screen">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <div class="admin-card-title">⏰ Konfigurasi Jadwal Pakan Otomatis</div>
+                  <div class="admin-card-subtitle">Maksimal 6 slot jadwal mandiri tersimpan di LittleFS & RTC DS3231</div>
+                </div>
+                <button class="btn-solid btn-green" style="width: auto; padding: 8px 16px;" onclick="addSlot()">
+                  ➕ Tambah Slot
+                </button>
+              </div>
+
+              <div id="slots-box" class="slot-grid"></div>
+
+              <button class="btn-solid btn-green" style="height: 48px;" onclick="saveSchedule()">
+                💾 &nbsp; SIMPAN SEMUA JADWAL KE ESP8266
+              </button>
+
+              <div id="sched-msg" class="msg-banner"></div>
+            </div>
+
+            <div class="admin-card" style="margin-top: 16px; border-left: 4px solid var(--accent-cyan);">
+              <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">💡 Informasi Ketahanan Offline</div>
+              <p style="font-size: 12.5px; color: var(--text-muted);">
+                Jadwal yang tersimpan akan ditulis ke memori flash LittleFS ESP8266. RTC DS3231 menjamin katup servo tetap terbuka dan memberi makan kucing tepat waktu walau koneksi internet atau router WiFi terputus.
+              </p>
+            </div>
+          </section>
+
+
+          <!-- ================= PAGE: SERVO ================= -->
+          <section id="page-servo" class="portal-screen">
+            <div class="grid-2">
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div class="admin-card-title">⚙️ Kalibrasi Sudut & Durasi Servo</div>
+                </div>
+
+                <div class="slider-box">
+                  <div class="slider-header-row">
+                    <span class="slider-name" style="color:#60A5FA">🔒 Sudut Posisi TUTUP</span>
+                    <span class="slider-badge" id="val-close" style="background:rgba(59,130,246,0.2);color:#60A5FA;">0°</span>
+                  </div>
+                  <input type="range" id="sl-close" min="0" max="180" step="1" value="0" oninput="updateSliders()">
+                </div>
+
+                <div class="slider-box">
+                  <div class="slider-header-row">
+                    <span class="slider-name" style="color:#34D399">🔓 Sudut Posisi BUKA</span>
+                    <span class="slider-badge" id="val-open" style="background:rgba(16,185,129,0.2);color:#34D399;">90°</span>
+                  </div>
+                  <input type="range" id="sl-open" min="0" max="180" step="1" value="90" oninput="updateSliders()">
+                </div>
+
+                <div class="slider-box">
+                  <div class="slider-header-row">
+                    <span class="slider-name" style="color:#FBBF24">⏳ Durasi Katup Terbuka</span>
+                    <span class="slider-badge" id="val-dur" style="background:rgba(245,158,11,0.2);color:#FBBF24;">2.0s</span>
+                  </div>
+                  <input type="range" id="sl-dur" min="500" max="8000" step="100" value="2000" oninput="updateSliders()">
+                </div>
+
+                <button class="btn-solid btn-blue" onclick="saveServo()" style="height: 46px;">
+                  💾 &nbsp; SIMPAN PENGATURAN SERVO
+                </button>
+                <div id="servo-msg" class="msg-banner"></div>
+              </div>
+
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div class="admin-card-title">📜 Riwayat Kalibrasi Servo</div>
+                  <button class="btn-quick" style="padding: 6px 12px; width: auto;" onclick="loadServoHistory()">🔄 Refresh</button>
+                </div>
+                <div class="admin-table-container">
+                  <table class="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Waktu</th>
+                        <th>Tutup / Buka</th>
+                        <th>Durasi</th>
+                        <th>Oleh</th>
+                      </tr>
+                    </thead>
+                    <tbody id="servo-hist-tbody">
+                      <tr><td colspan="4" style="text-align:center; padding: 20px;">Tekan refresh untuk memuat...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- ================= PAGE: HISTORY ================= -->
+          <section id="page-hist" class="portal-screen">
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div>
+                  <div class="admin-card-title">📜 Log Riwayat Lengkap Pakan</div>
+                  <div class="admin-card-subtitle">Semua riwayat pengeluaran pakan kucing terintegrasi</div>
+                </div>
+                <button class="btn-solid btn-blue" style="width: auto; padding: 8px 16px;" onclick="loadHistory()">
+                  🔄 Refresh Log
+                </button>
+              </div>
+
+              <div class="admin-table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Waktu Eksekusi</th>
+                      <th>Metode</th>
+                      <th>Slot Jadwal</th>
+                      <th>Sinkronisasi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hist-tbody">
+                    <tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat riwayat...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+
+          <!-- ================= PAGE: WIFI ================= -->
+          <section id="page-wifi" class="portal-screen">
+            <div class="grid-2">
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div class="admin-card-title">📶 Mode Pengaturan Wi-Fi</div>
+                </div>
+
+                <div class="mode-switch-grid">
+                  <button class="mode-card-btn active-green" id="wifi-mode-ap" onclick="setWifiMode(true)">
+                    <h4>📶 Mode AP Direct</h4>
+                    <p>Hubungkan langsung ke hotspot "CatFeeder-Setup"</p>
+                  </button>
+                  <button class="mode-card-btn" id="wifi-mode-remote" onclick="setWifiMode(false)">
+                    <h4>🌐 Mode Remote</h4>
+                    <p>Kirim kredensial router via Server Cloud</p>
+                  </button>
+                </div>
+
+                <div id="wifi-mode-note" class="msg-banner info" style="margin-top: 0; text-align: left; justify-content: flex-start;">
+                  📌 Mode AP: Sambungkan smartphone/laptop ke hotspot CatFeeder-Setup (192.168.4.1)
+                </div>
+              </div>
+
+              <div class="admin-card">
+                <div class="admin-card-header">
+                  <div class="admin-card-title">📝 Kredensial Wi-Fi Rumah Baru</div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">📡 Nama Wi-Fi (SSID)</label>
+                  <input id="wifi-ssid" class="form-input" type="text" placeholder="Contoh: WiFi-Rumah-2.4G">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">🔒 Password Wi-Fi</label>
+                  <input id="wifi-pass" class="form-input" type="password" placeholder="Masukkan password Wi-Fi">
+                </div>
+
+                <button class="btn-solid btn-green" onclick="sendWifi()" style="height: 46px; margin-top: 10px;">
+                  🚀 &nbsp; KIRIM KONFIGURASI KE ESP8266
+                </button>
+
+                <div id="wifi-msg" class="msg-banner"></div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-tab active" id="nav-dash" onclick="goPage('dash')">
+        <span class="icon">📊</span>
+        <span>Beranda</span>
+      </button>
+      <button class="mobile-nav-tab" id="nav-sched" onclick="goPage('sched')">
+        <span class="icon">⏰</span>
+        <span>Jadwal</span>
+      </button>
+      <button class="mobile-nav-tab" id="nav-servo" onclick="goPage('servo')">
+        <span class="icon">⚙️</span>
+        <span>Servo</span>
+      </button>
+      <button class="mobile-nav-tab" id="nav-hist" onclick="goPage('hist')">
+        <span class="icon">📜</span>
+        <span>Riwayat</span>
+      </button>
+      <button class="mobile-nav-tab" id="nav-wifi" onclick="goPage('wifi')">
+        <span class="icon">📡</span>
+        <span>WiFi</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <div id="drawer-overlay" onclick="closeSidebar()"></div>
+
+</div>
+
+<!-- ========================================== -->
+<!-- 3. JAVASCRIPT LOGIC (ROBUST & RESILIENT) -->
+<!-- ========================================== -->
+<script>
+const PUBLIC_API_URL = 'https://catfeeder.tamamici.my.id';
+
+function getDefaultServerUrl() {
+  const saved = localStorage.getItem('sv');
+  if (saved && !saved.includes('localhost') && !saved.includes('127.0.0.1')) {
+    if (saved.startsWith('http://catfeeder.tamamici.my.id')) {
+      return saved.replace('http://', 'https://');
+    }
+    return saved;
+  }
+  return PUBLIC_API_URL;
+}
+
+const S = {
+  serverUrl: getDefaultServerUrl(),
+  token: localStorage.getItem('tk') || '',
+  username: localStorage.getItem('un') || '',
+  deviceId: localStorage.getItem('dev') || 'CAT_FEEDER_01',
+  currentPage: 'dash',
+  isRegister: false,
+  wifiApMode: true,
+  slots: [],
+  dashTimer: null
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inp-server').value = S.serverUrl;
+  updateSliders();
+  if (S.token) {
+    showMain();
+    refreshPage();
+  }
+});
+
+async function api(method, path, body = null) {
+  const url = S.serverUrl.replace(/\/$/, '') + path;
+  const opts = {
+    method,
+    headers: {
+      'Authorization': 'Bearer ' + S.token,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(url, opts);
+    if (r.status === 401) {
+      const res = await r.json().catch(() => ({}));
+      if (res?.error_code === 'INVALID_TOKEN' || res?.error_code === 'MISSING_TOKEN') {
+        doLogout('Sesi login telah berakhir. Silakan masuk kembali.');
+        return null;
+      }
+    }
+    return await r.json();
+  } catch (err) {
+    return null;
+  }
+}
+const apiGet = p => api('GET', p);
+const apiPost = (p, b) => api('POST', p, b);
+
+const pageTitles = {
+  dash: '📊  Dashboard Feeder',
+  sched: '⏰  Jadwal Makan Otomatis',
+  servo: '⚙️  Kalibrasi Sudut Servo',
+  hist: '📜  Riwayat Log Pakan',
+  wifi: '📡  Koneksi Wi-Fi ESP8266'
+};
+
+function toggleSidebar() {
+  const sb = document.getElementById('admin-sidebar');
+  const ov = document.getElementById('drawer-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('admin-sidebar').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+
+function goPage(page) {
+  closeSidebar();
+  if (S.currentPage === page && document.getElementById('page-' + page)?.classList.contains('active')) return;
+  if (S.currentPage === 'dash' && S.dashTimer) {
+    clearInterval(S.dashTimer);
+    S.dashTimer = null;
+  }
+  
+  // Update screen tabs
+  document.querySelectorAll('.admin-content-viewport .portal-screen').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-tab').forEach(el => el.classList.remove('active'));
+
+  const pg = document.getElementById('page-' + page);
+  if (pg) pg.classList.add('active');
+  const di = document.getElementById('di-' + page);
+  if (di) di.classList.add('active');
+  const tb = document.getElementById('nav-' + page);
+  if (tb) tb.classList.add('active');
+
+  document.getElementById('topbar-title').textContent = pageTitles[page] || '🐾 CatFeeder Pro';
+  S.currentPage = page;
+
+  if (page === 'dash') {
+    fetchDashStatus();
+    fetchDashLog();
+    startDashPoll();
+  } else if (page === 'sched') {
+    loadSchedule();
+  } else if (page === 'servo') {
+    loadServoSettings();
+  } else if (page === 'hist') {
+    loadHistory();
+  }
+}
+
+function refreshPage() {
+  const btn = document.getElementById('topbar-refresh');
+  btn.classList.add('spin');
+  setTimeout(() => btn.classList.remove('spin'), 600);
+
+  const p = S.currentPage;
+  if (p === 'dash') {
+    fetchDashStatus();
+    fetchDashLog();
+  } else if (p === 'sched') {
+    loadSchedule();
+  } else if (p === 'servo') {
+    loadServoSettings();
+  } else if (p === 'hist') {
+    loadHistory();
+  }
+}
+
+function setLoginMode(reg) {
+  S.isRegister = reg;
+  document.getElementById('btn-mode-login').className = reg ? '' : 'active';
+  document.getElementById('btn-mode-reg').className = reg ? 'active-green' : '';
+  document.getElementById('reg-extra').style.display = reg ? 'block' : 'none';
+  document.getElementById('btn-auth').textContent = reg ? '📝 DAFTAR AKUN BARU' : '🚀 MASUK KE SISTEM';
+  document.getElementById('btn-auth').className = reg ? 'btn-solid btn-green' : 'btn-solid btn-blue';
+  setMsg('login-msg', '', '');
+}
+
+async function doAuth() {
+  let su = document.getElementById('inp-server').value.trim().replace(/\/$/, '');
+  if (su.startsWith('http://catfeeder.tamamici.my.id')) {
+    su = su.replace('http://', 'https://');
+    document.getElementById('inp-server').value = su;
+  }
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value.trim();
+  if (!su || !u || !p) {
+    setMsg('login-msg', '⚠️ Harap isi semua kolom!', 'err');
+    return;
+  }
+  setMsg('login-msg', '🔄 Menghubungkan ke server...', 'info');
+  const btn = document.getElementById('btn-auth');
+  btn.disabled = true;
+
+  const action = S.isRegister ? 'register' : 'login';
+  const body = { username: u, password: p };
+  if (S.isRegister) body.device_id = document.getElementById('inp-dev')?.value.trim() || 'CAT_FEEDER_01';
+
+  try {
+    const r = await fetch(`${su}/api/auth.php?action=${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d?.success) {
+      S.serverUrl = su;
+      S.token = d.data.token;
+      S.username = u;
+      S.deviceId = d.data.device_id || 'CAT_FEEDER_01';
+      localStorage.setItem('sv', su);
+      localStorage.setItem('tk', d.data.token);
+      localStorage.setItem('un', u);
+      localStorage.setItem('dev', S.deviceId);
+      setMsg('login-msg', '', '');
+      showMain();
+    } else {
+      setMsg('login-msg', '❌ ' + (d?.message || 'Gagal masuk/daftar'), 'err');
+    }
+  } catch (err) {
+    setMsg('login-msg', '❌ Tidak bisa terhubung ke server. Pastikan URL menggunakan HTTPS (https://catfeeder.tamamici.my.id).', 'err');
+  }
+  btn.disabled = false;
+}
+
+function showMain() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-main').classList.add('active');
+  document.getElementById('drawer-user').textContent = S.username || 'Admin';
+  document.getElementById('drawer-dev').textContent = 'Device: ' + S.deviceId;
+  document.getElementById('user-initial').textContent = (S.username || 'A').charAt(0).toUpperCase();
+  goPage('dash');
+}
+
+function doLogout(msg = '') {
+  closeSidebar();
+  S.token = '';
+  S.username = '';
+  S.deviceId = 'CAT_FEEDER_01';
+  localStorage.removeItem('tk');
+  localStorage.removeItem('un');
+  localStorage.removeItem('dev');
+  if (S.dashTimer) {
+    clearInterval(S.dashTimer);
+    S.dashTimer = null;
+  }
+  document.getElementById('screen-main').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  setLoginMode(false);
+  if (msg) setMsg('login-msg', msg, 'info');
+}
+
+function startDashPoll() {
+  if (S.dashTimer) return;
+  S.dashTimer = setInterval(fetchDashStatus, 5000);
+}
+
+async function fetchDashStatus() {
+  const d = await apiGet('/api/device_status.php?action=status');
+  const badge = document.getElementById('dash-badge');
+  const badgeText = document.getElementById('dash-badge-text');
+  const ls = document.getElementById('dash-lastseen');
+  const rtc = document.getElementById('dash-rtc');
+  const statStatus = document.getElementById('stat-status');
+  const lastFeed = document.getElementById('dash-lastfeed');
+
+  if (d?.success) {
+    const dev = d.data, s = dev.status, sec = dev.seconds_ago;
+    if (s === 'online') {
+      badge.className = 'badge-telemetry online';
+      badgeText.textContent = 'ONLINE';
+      statStatus.textContent = '🟢 Online';
+      statStatus.style.color = 'var(--success)';
+      ls.textContent = sec != null ? sec + 'd lalu' : 'Online';
+    } else if (s === 'warning') {
+      badge.className = 'badge-telemetry warning';
+      badgeText.textContent = 'WARNING';
+      statStatus.textContent = '🟡 Warning';
+      statStatus.style.color = 'var(--warning)';
+      ls.textContent = sec != null ? sec + 'd lalu' : 'Baru saja';
+    } else {
+      badge.className = 'badge-telemetry offline';
+      badgeText.textContent = 'OFFLINE';
+      statStatus.textContent = '🔴 Offline';
+      statStatus.style.color = 'var(--danger)';
+      ls.textContent = dev.last_seen || 'Offline';
+    }
+    rtc.textContent = dev.rtc_time || dev.server_time || '-';
+    
+    if (dev.last_feeding) {
+      const lf = dev.last_feeding;
+      const typeLabel = lf.type === 'manual' ? '🍖 Manual' : `⏰ Slot ${lf.schedule_slot || 1}`;
+      lastFeed.textContent = `${typeLabel} (${lf.executed_at.slice(11, 16)})`;
+    } else {
+      lastFeed.textContent = 'Belum ada pakan';
+    }
+  } else {
+    badge.className = 'badge-telemetry offline';
+    badgeText.textContent = 'OFFLINE';
+    statStatus.textContent = '🔴 Offline';
+    statStatus.style.color = 'var(--danger)';
+    ls.textContent = 'Offline';
+    rtc.textContent = '-';
+  }
+}
+
+async function fetchDashLog() {
+  const d = await apiGet('/api/device_status.php?action=feeding-log&limit=6');
+  const tbody = document.getElementById('dash-log-tbody');
+  if (d?.success && d.data.logs?.length) {
+    tbody.innerHTML = d.data.logs.map(l => {
+      const isM = l.type === 'manual';
+      const isSuccess = l.status === 'success';
+      const typeBadge = isM ? '🍖 Manual Feed' : `⏰ Jadwal Slot ${l.schedule_slot || 1}`;
+      const statusBadge = isSuccess 
+        ? '<span style="color:var(--success);font-weight:700;">✅ Berhasil</span>'
+        : '<span style="color:var(--danger);font-weight:700;">❌ Gagal</span>';
+      return `
+        <tr>
+          <td>${statusBadge}</td>
+          <td>${l.executed_at}</td>
+          <td><strong>${typeBadge}</strong></td>
+          <td>${isM ? 'Ditekan via Web/App' : 'Dipicu otomatis RTC DS3231'}</td>
+        </tr>
+      `;
+    }).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:var(--text-dim);">Belum ada riwayat pakan yang tercatat.</td></tr>';
+  }
+}
+
+async function sendFeed() {
+  setMsg('dash-feedmsg', '🔄 Mengirim perintah pakan ke antrean...', 'info');
+  const d = await apiPost('/api/feed.php', { device_id: S.deviceId || 'CAT_FEEDER_01' });
+  if (d?.success) {
+    setMsg('dash-feedmsg', '✅ Perintah FEED berhasil terkirim ke ESP8266!', 'ok');
+    setTimeout(fetchDashLog, 2000);
+  } else if (d?.error_code === 'COMMAND_ALREADY_PENDING' || d?.code === 'DUPLICATE_PENDING') {
+    setMsg('dash-feedmsg', '⏳ Masih ada perintah pakan dalam antrean ESP.', 'info');
+  } else {
+    setMsg('dash-feedmsg', '⚠️ ' + (d?.message || 'Gagal mengirim pakan'), 'err');
+  }
+}
+
+async function syncRtc() {
+  const dNow = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const localNow = `${dNow.getFullYear()}-${pad(dNow.getMonth() + 1)}-${pad(dNow.getDate())} ${pad(dNow.getHours())}:${pad(dNow.getMinutes())}:${pad(dNow.getSeconds())}`;
+
+  setMsg('dash-feedmsg', `🔄 Menyelaraskan waktu RTC (${localNow})...`, 'info');
+  const d = await apiPost('/api/rtc.php?action=set', { datetime: localNow });
+  if (d?.success) {
+    setMsg('dash-feedmsg', `✅ Waktu RTC DS3231 berhasil diselaraskan (${localNow})!`, 'ok');
+    fetchDashStatus();
+  } else {
+    setMsg('dash-feedmsg', '⚠️ Gagal sinkronisasi RTC: ' + (d?.message || 'Error'), 'err');
+  }
+}
+
+async function loadSchedule() {
+  const d = await apiGet('/api/schedule.php');
+  const box = document.getElementById('slots-box');
+  box.innerHTML = '';
+  S.slots = [];
+  if (d?.success && d.data?.schedules) {
+    let i = 1;
+    for (const k in d.data.schedules) {
+      const s = d.data.schedules[k];
+      addSlotRow(i++, s.enabled !== false, s.hour ?? 7, s.minute ?? 0);
+    }
+  }
+  if (S.slots.length === 0) addSlot();
+}
+
+function addSlot() {
+  if (S.slots.length >= 6) {
+    setMsg('sched-msg', '⚠️ Maksimal 6 jadwal otomatis.', 'err');
+    return;
+  }
+  addSlotRow(S.slots.length + 1, true, 8, 0);
+}
+
+function formatTimeInput(el, max) {
+  let v = parseInt(el.value, 10);
+  if (isNaN(v)) v = 0;
+  v = Math.max(0, Math.min(max, v));
+  el.value = String(v).padStart(2, '0');
+}
+
+function addSlotRow(n, enabled, hour, minute) {
+  const id = 'slot-' + Date.now() + '-' + Math.floor(Math.random() * 1000) + '-' + n;
+  const div = document.createElement('div');
+  div.className = 'slot-card' + (enabled ? '' : ' disabled');
+  div.id = id;
+  const hVal = String(hour).padStart(2, '0');
+  const mVal = String(minute).padStart(2, '0');
+  div.innerHTML = `
+    <button class="slot-toggle-pill ${enabled ? 'on' : 'off'}" data-en="${enabled ? '1' : '0'}" onclick="toggleSlot('${id}',this)">
+      ⏰ Slot ${n}: ${enabled ? 'AKTIF 🟢' : 'OFF ⚪'}
+    </button>
+    <div class="time-input-group">
+      <input class="time-digit" type="number" min="0" max="23" value="${hVal}" data-type="h" onchange="formatTimeInput(this,23)" onblur="formatTimeInput(this,23)">
+      <span class="time-sep">:</span>
+      <input class="time-digit" type="number" min="0" max="59" value="${mVal}" data-type="m" onchange="formatTimeInput(this,59)" onblur="formatTimeInput(this,59)">
+    </div>
+    <button class="btn-del-slot" onclick="delSlot('${id}')" title="Hapus Slot">🗑️</button>
+  `;
+  document.getElementById('slots-box').appendChild(div);
+  S.slots.push(id);
+  reindexSlots();
+}
+
+function toggleSlot(id, btn) {
+  const newEn = btn.dataset.en !== '1';
+  btn.dataset.en = newEn ? '1' : '0';
+  btn.className = 'slot-toggle-pill ' + (newEn ? 'on' : 'off');
+  const n = S.slots.indexOf(id) + 1;
+  btn.textContent = `⏰ Slot ${n}: ${newEn ? 'AKTIF 🟢' : 'OFF ⚪'}`;
+  const row = document.getElementById(id);
+  if (row) row.className = 'slot-card' + (newEn ? '' : ' disabled');
+}
+
+function delSlot(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+  S.slots = S.slots.filter(s => s !== id);
+  reindexSlots();
+}
+
+function reindexSlots() {
+  S.slots.forEach((id, i) => {
+    const row = document.getElementById(id);
+    if (!row) return;
+    const btn = row.querySelector('.slot-toggle-pill');
+    const n = i + 1;
+    if (btn) btn.textContent = `⏰ Slot ${n}: ${btn.dataset.en === '1' ? 'AKTIF 🟢' : 'OFF ⚪'}`;
+  });
+}
+
+async function saveSchedule() {
+  const payload = S.slots.map((id, idx) => {
+    const row = document.getElementById(id);
+    if (!row) return null;
+    const btn = row.querySelector('.slot-toggle-pill');
+    const hInp = row.querySelector('[data-type=h]');
+    const mInp = row.querySelector('[data-type=m]');
+    return {
+      slot: idx + 1,
+      enabled: btn?.dataset.en === '1',
+      hour: Math.min(23, Math.max(0, parseInt(hInp?.value || '0', 10))),
+      minute: Math.min(59, Math.max(0, parseInt(mInp?.value || '0', 10)))
+    };
+  }).filter(Boolean);
+
+  setMsg('sched-msg', '🔄 Menyimpan jadwal ke server & ESP8266...', 'info');
+  const d = await apiPost('/api/schedule.php', { schedules: payload });
+  if (d?.success) {
+    setMsg('sched-msg', '✅ ' + (d.data?.total_saved || payload.length) + ' Jadwal tersimpan & terkirim ke ESP8266!', 'ok');
+  } else {
+    setMsg('sched-msg', '⚠️ ' + (d?.message || 'Gagal menyimpan jadwal'), 'err');
+  }
+}
+
+function updateSliders() {
+  ['close', 'open', 'dur'].forEach(k => {
+    const sl = document.getElementById('sl-' + k);
+    if (!sl) return;
+    sl.style.setProperty('--pct', ((sl.value - sl.min) / (sl.max - sl.min) * 100) + '%');
+  });
+  const slClose = document.getElementById('sl-close');
+  const slOpen = document.getElementById('sl-open');
+  const slDur = document.getElementById('sl-dur');
+  if (slClose) document.getElementById('val-close').textContent = slClose.value + '°';
+  if (slOpen) document.getElementById('val-open').textContent = slOpen.value + '°';
+  if (slDur) document.getElementById('val-dur').textContent = (parseInt(slDur.value, 10) / 1000).toFixed(1) + 's';
+}
+
+async function loadServoSettings() {
+  const d = await apiGet('/api/servo_settings.php?action=get');
+  if (d?.success && d.data?.settings) {
+    const s = d.data.settings;
+    if (s.close_angle != null) document.getElementById('sl-close').value = s.close_angle;
+    if (s.open_angle != null) document.getElementById('sl-open').value = s.open_angle;
+    if (s.duration_ms != null) document.getElementById('sl-dur').value = s.duration_ms;
+    updateSliders();
+  }
+}
+
+async function saveServo() {
+  setMsg('servo-msg', '🔄 Menyimpan pengaturan servo...', 'info');
+  const d = await apiPost('/api/servo_settings.php?action=set', {
+    close_angle: parseInt(document.getElementById('sl-close').value, 10),
+    open_angle: parseInt(document.getElementById('sl-open').value, 10),
+    duration_ms: parseInt(document.getElementById('sl-dur').value, 10)
+  });
+  if (d?.success) {
+    setMsg('servo-msg', '✅ Pengaturan servo tersimpan & dikirim ke ESP8266!', 'ok');
+    loadServoHistory();
+  } else {
+    setMsg('servo-msg', '⚠️ ' + (d?.message || 'Gagal menyimpan servo'), 'err');
+  }
+}
+
+async function loadServoHistory() {
+  const tbody = document.getElementById('servo-hist-tbody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">🔄 Memuat riwayat...</td></tr>';
+  const d = await apiGet('/api/servo_settings.php?action=logs&limit=15');
+  if (!d) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:var(--danger);">❌ Gagal memuat riwayat</td></tr>';
+    return;
+  }
+  const logs = d.data?.logs || [];
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color:var(--text-dim);">Belum ada riwayat perubahan servo.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = logs.map(l => `
+    <tr>
+      <td>${l.created_at}</td>
+      <td>🔒 ${l.close_angle}° &nbsp;/&nbsp; 🔓 ${l.open_angle}°</td>
+      <td>⏳ ${(l.duration_ms / 1000).toFixed(1)}s</td>
+      <td><span style="color:#60A5FA;font-weight:700;">${l.changed_by || 'admin'}</span></td>
+    </tr>
+  `).join('');
+}
+
+async function loadHistory() {
+  const tbody = document.getElementById('hist-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Memuat riwayat...</td></tr>';
+  const d = await apiGet('/api/device_status.php?action=feeding-log&limit=40');
+  if (!d?.success || !d.data?.logs?.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color:var(--text-dim);">Belum ada riwayat pakan.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = d.data.logs.map(l => {
+    const isM = l.type === 'manual';
+    const isSuccess = l.status === 'success';
+    return `
+      <tr>
+        <td>${isSuccess ? '<span style="color:var(--success);font-weight:700;">✅ Berhasil</span>' : '<span style="color:var(--danger);font-weight:700;">❌ Gagal</span>'}</td>
+        <td>${l.executed_at}</td>
+        <td><strong>${isM ? '🍖 Manual Feed' : '⏰ Jadwal Otomatis'}</strong></td>
+        <td>${l.schedule_slot ? 'Slot ' + l.schedule_slot : '-'}</td>
+        <td>${l.synced ? '🟢 Terkoneksi' : '⚪ Offline Queue'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function setWifiMode(isAp) {
+  S.wifiApMode = isAp;
+  document.getElementById('wifi-mode-ap').className = 'mode-card-btn ' + (isAp ? 'active-green' : '');
+  document.getElementById('wifi-mode-remote').className = 'mode-card-btn ' + (!isAp ? 'active-blue' : '');
+  document.getElementById('wifi-mode-note').textContent = isAp
+    ? '📌 Mode AP: Sambungkan smartphone/laptop ke hotspot CatFeeder-Setup (192.168.4.1)'
+    : '📌 Mode Remote: Konfigurasi akan dikirim melalui server cloud backend';
+}
+
+async function sendWifi() {
+  const ssid = document.getElementById('wifi-ssid').value.trim();
+  const pass = document.getElementById('wifi-pass').value.trim();
+  if (!ssid) {
+    setMsg('wifi-msg', '⚠️ SSID tidak boleh kosong!', 'err');
+    return;
+  }
+
+  if (S.wifiApMode) {
+    setMsg('wifi-msg', '🔄 Mengirim konfigurasi WiFi langsung ke ESP (192.168.4.1)...', 'info');
+    try {
+      const formData = new URLSearchParams();
+      formData.append('ssid', ssid);
+      formData.append('password', pass);
+      const res = await fetch('http://192.168.4.1/wifi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString()
+      });
+      if (res.ok) {
+        setMsg('wifi-msg', '✅ Konfigurasi tersimpan di ESP8266! ESP akan restart dan menghubungkan ke WiFi baru.', 'ok');
+      } else {
+        setMsg('wifi-msg', '⚠️ ESP merespon dengan status: ' + res.status, 'err');
+      }
+    } catch (e) {
+      setMsg('wifi-msg', '⚠️ Gagal kirim ke 192.168.4.1. Pastikan WiFi Anda sudah terhubung ke hotspot "CatFeeder-Setup"!', 'err');
+    }
+  } else {
+    setMsg('wifi-msg', '🔄 Mengirim konfigurasi WiFi ke antrean server...', 'info');
+    const d = await apiPost('/api/wifi_set.php', {
+      device_id: S.deviceId || 'CAT_FEEDER_01',
+      ssid: ssid,
+      password: pass
+    });
+    if (d?.success) {
+      setMsg('wifi-msg', '✅ Konfigurasi WiFi berhasil dikirim ke antrean ESP8266!', 'ok');
+    } else {
+      setMsg('wifi-msg', '⚠️ ' + (d?.message || 'Gagal mengirim konfigurasi'), 'err');
+    }
+  }
+}
+
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg-banner ' + (type || '');
+}
+</script>
+</body>
+</html>

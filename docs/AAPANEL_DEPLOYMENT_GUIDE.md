@@ -195,26 +195,16 @@ Buka file **[`app/nodemcu/nodemcu.ino`](file:///c:/Users/LENOVO/Desktop/Pakan-ku
 
 ---
 
-## Langkah 8: Update Aplikasi Android Kivy
+## Langkah 8: Buka & Uji Web Administrator Portal
 
-Buka file **[`app/frontend/main.py`](file:///c:/Users/LENOVO/Desktop/Pakan-kucing/app/frontend/main.py)**:
-
-1. Ubah default `server_url` di class `LoginScreen`:
-   ```python
-   class LoginScreen(Screen):
-       server_url = StringProperty("https://feeder.namadomain.com")
-       username = StringProperty("admin")
-       password = StringProperty("")
-   ```
-2. Jalankan lokal untuk verifikasi:
-   ```bash
-   python app/frontend/main.py
-   ```
-3. Build APK Production menggunakan Buildozer:
-   ```bash
-   cd app/frontend
-   buildozer -v android release
-   ```
+1. Buka browser di PC, Laptop, atau Smartphone Anda:
+   👉 `https://feeder.namadomain.com/` (atau `https://catfeeder.tamamici.my.id/`)
+2. Masuk menggunakan akun admin Anda:
+   - **Username:** `admin` (atau username terdaftar Anda)
+   - **Password:** `[password_anda]`
+3. Periksa panel dashboard:
+   - Indikator status perangkat harus menunjukkan **🟢 ONLINE**.
+   - Coba lakukan uji coba pakan instan dengan menekan tombol **🍖 KASIH PAKAN SEKARANG**.
 
 ---
 

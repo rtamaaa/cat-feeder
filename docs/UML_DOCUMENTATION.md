@@ -1,552 +1,447 @@
-# 📚 Dokumentasi Teknis & Desain UML: Smart Cat Feeder Pro
+# 📚 Dokumentasi Teknis & Diagram UML: Smart Cat Feeder Pro
 
-Dokumen ini berisi spesifikasi perancangan sistem **Smart Cat Feeder Pro** secara komprehensif menggunakan diagram standar **UML (Unified Modeling Language)** dan **PlantUML**.
-
----
-
-## 📑 Daftar Isi Diagram
-1. [🏛️ Desain Arsitektur Sistem (System Architecture & Deployment)](#1-desain-arsitektur-sistem)
-2. [👥 Use Case Diagram](#2-use-case-diagram)
-3. [🔄 Activity Diagram (Alur Kerja Pakan & Kalibrasi)](#3-activity-diagram)
-4. [⏱️ Sequence Diagram (Interaksi End-to-End & Polling)](#4-sequence-diagram)
-5. [🗄️ Entity Relationship Diagram (ERD Database)](#5-entity-relationship-diagram-erd)
-6. [🧱 Class & Component Diagram](#6-class--component-diagram)
-7. [⚙️ State Machine Diagram (Firmware Lifecycle)](#7-state-machine-diagram)
+> **Sistem Otomasi Pakan Kucing Berbasis IoT (ESP8266 + DS3231 RTC + REST API + Web Admin & Mobile Client)**  
+> Versi Dokumen: `2.0.0` | Terakhir Diperbarui: `September 2026`
 
 ---
 
-## 1. 🏛️ Desain Arsitektur Sistem
-Diagram arsitektur menggambarkan pembagian 3 tier utama:
-- **Client Tier:** Aplikasi Android/Desktop berbasis Python & Kivy dengan custom UI (BottomNav + Drawer).
-- **Server Tier:** Backend REST API berbasis PHP PDO & Database MySQL (Laragon / Web Server).
-- **IoT Hardware Tier:** NodeMCU ESP8266 dengan modul RTC DS3231 (I2C) & Motor Servo SG90/MG996R (PWM).
+## 📑 Daftar Isi
+1. [🏛️ 1. Arsitektur Sistem (System Architecture)](#1-arsitektur-sistem-system-architecture)
+2. [👥 2. Use Case Diagram](#2-use-case-diagram)
+3. [🔄 3. Activity Diagram (Alur Kerja Utama)](#3-activity-diagram-alur-kerja-utama)
+4. [⏱️ 4. Sequence Diagram (Interaksi Komunikasi)](#4-sequence-diagram-interaksi-komunikasi)
+5. [🗄️ 5. Entity Relationship Diagram (ERD Database)](#5-entity-relationship-diagram-erd-database)
+6. [🧱 6. Class Diagram & Struktur Komponen](#6-class-diagram--struktur-komponen)
+7. [⚙️ 7. State Machine Diagram (NodeMCU Firmware)](#7-state-machine-diagram-nodemcu-firmware)
+8. [🔌 8. Spesifikasi Pinout & Pengkabelan Hardware](#8-spesifikasi-pinout--pengkabelan-hardware)
+9. [🌐 9. Ringkasan Spesifikasi REST API](#9-ringkasan-spesifikasi-rest-api)
 
-```plantuml
-@startuml System_Architecture
-!theme plain
-skinparam backgroundColor #FFFFFF
-skinparam componentStyle uml2
+---
 
-node "Mobile / Desktop Client" as ClientNode {
-    [Aplikasi Android (Kivy / Python)] as KivyApp
-    component "UI Layer\n(BottomNav + Drawer)" as UILayer
-    component "API Service\n(Requests HTTP)" as HttpService
-    
-    KivyApp --> UILayer
-    UILayer --> HttpService
-}
+## 1. 🏛️ Arsitektur Sistem (System Architecture)
 
-node "Server Backend (Apache / Laragon)" as ServerNode {
-    package "REST API Services (PHP)" as ApiPackage {
-        [auth.php] as ApiAuth
-        [device_status.php] as ApiStatus
-        [feed.php] as ApiFeed
-        [schedule.php] as ApiSched
-        [servo_settings.php] as ApiServo
-        [command_poll.php] as ApiPoll
-        [command_result.php] as ApiResult
-        [heartbeat.php] as ApiHeartbeat
-        [rtc.php] as ApiRtc
-        [wifi_set.php] as ApiWifi
-    }
-    
-    database "MySQL / MariaDB\n(smart_cat_feeder)" as DatabaseNode {
-        [devices]
-        [device_settings]
-        [settings_logs]
-        [schedules]
-        [feeding_logs]
-        [commands]
-        [android_users]
-    }
-    
-    ApiPackage --> DatabaseNode : PDO Database Connection
-}
+Sistem **Smart Cat Feeder Pro** dibangun menggunakan arsitektur **3-Tier Distributed IoT**:
+- **Client Tier:** Web Administrator Portal (HTML5 / Vanilla CSS / JavaScript) yang responsif untuk Desktop, Tablet, dan Smartphone.
+- **Server Tier:** REST API Backend berbasis PHP PDO dengan database relasional MySQL/MariaDB (Cloud VPS / Localhost Laragon).
+- **IoT Hardware Tier:** Mikrokontroler NodeMCU ESP8266, modul Real-Time Clock DS3231 (I2C), dan Motor Servo (PWM) dengan penyimpanan lokal LittleFS untuk ketahanan offline.
 
-node "IoT Hardware Device (Cat Feeder)" as HardwareNode {
-    package "NodeMCU ESP8266 Firmware" as EspPackage {
-        [WiFi Manager & HTTP Client] as EspWifi
-        [Command Polling Engine] as EspPoll
-        [Schedule Checker Engine] as EspSchedEngine
-        [LittleFS Flash Storage] as EspFS
-        [Servo State Machine] as EspServoSM
-    }
-    
-    node "Sensors & Actuators" as ActuatorNode {
-        [DS3231 Real Time Clock (I2C)] as RtcHw
-        [SG90 / MG996R Servo Motor] as ServoHw
-    }
-    
-    EspSchedEngine --> RtcHw : I2C (SDA: D2 / SCL: D1)
-    EspServoSM --> ServoHw : PWM Signal (D5 / GPIO14)
-    EspPackage --> EspFS : Read / Write Config (JSON)
-}
+```mermaid
+graph TB
+    subgraph Client_Tier["🌐 Client Layer"]
+        WebApp["🌐 Web Admin Portal<br/>(HTML5 / Vanilla CSS / JS)"]
+    end
 
-HttpService --> ApiPackage : HTTP / JSON (Port 80)\n[Bearer Token Auth]
-EspWifi --> ApiPackage : HTTP / JSON (Polling 5s, Heartbeat 10s)\n[Device Header Auth]
-@enduml
+    subgraph Server_Tier["☁️ Cloud / Server Layer (REST API & DB)"]
+        Nginx["🌐 Nginx / Apache Server<br/>(HTTPS / Port 443)"]
+        PHP_API["⚙️ PHP REST API Controller<br/>(auth, status, feed, sched, servo, wifi)"]
+        MySQL[("🗄️ MySQL Database<br/>(smart_cat_feeder)")]
+        
+        Nginx --> PHP_API
+        PHP_API --> MySQL
+    end
+
+    subgraph Hardware_Tier["🐾 IoT Hardware Tier (Cat Feeder)"]
+        ESP["⚡ NodeMCU ESP8266<br/>(Non-blocking Loop Engine)"]
+        LittleFS["💾 LittleFS Flash<br/>(wifi, sched, servo, feedlog)"]
+        RTC["🕒 DS3231 RTC Module<br/>(I2C: D2/SDA, D1/SCL)"]
+        Servo["⚙️ Servo Motor SG90/MG996R<br/>(PWM: D5/GPIO14)"]
+        
+        ESP <--> LittleFS
+        ESP <--> RTC
+        ESP --> Servo
+    end
+
+    WebApp -->|"HTTPS / JSON (Bearer Token)"| Nginx
+    ESP -->|"HTTP/HTTPS Polling (5s) & Heartbeat (10s)<br/>(X-Device-ID & Token Auth)"| Nginx
 ```
 
 ---
 
-## 2. 👥 Use Case Diagram
-Menggambarkan interaksi antara **Pemilik Kucing (User)**, **NodeMCU ESP8266 (Device)**, dan **Modul DS3231 RTC (Timer)** terhadap fitur-fitur sistem.
+## 2. 👥 Use Case Diagram & Spesifikasi
 
-```plantuml
-@startuml UseCase_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-skinparam actorStyle awesome
+Diagram Use Case memetakan kebutuhan fungsional antara tiga aktor utama pada Web IoT Portal:
+1. **Administrator / Pemilik Kucing:** Mengatur jadwal makan, pakan manual (*Feed Now*), kalibrasi katup servo, konfigurasi Wi-Fi, dan memantau telemetri perangkat.
+2. **NodeMCU ESP8266 (IoT Device):** Memproses polling antrean perintah, menggerakkan motor servo, dan melaporkan log hasil eksekusi.
+3. **Modul DS3231 RTC (Hardware Timer):** Menjaga presisi waktu otonom untuk memicu jadwal makan secara mandiri tanpa tergantung internet.
 
-left to right direction
+```mermaid
+flowchart LR
+    User(("👤 Administrator /<br/>Pemilik Kucing"))
+    ESP(("⚡ NodeMCU ESP8266<br/>(IoT Device)"))
+    RTC(("🕒 DS3231 RTC<br/>(Hardware Clock)"))
 
-actor "Pemilik Kucing (User)" as User
-actor "NodeMCU ESP8266 (Device)" as Device
-actor "Modul DS3231 RTC (Timer)" as RTC
+    subgraph Portal[" Smart Cat Feeder - Web IoT Portal "]
+        UC1(["UC01: Login & Registrasi Akun"])
+        UC2(["UC02: Logout dari Portal"])
+        UC3(["UC03: Beri Pakan Manual (Feed Now)"])
+        UC4(["UC04: Monitoring Status Telemetri & Jam RTC"])
+        UC5(["UC05: Lihat Riwayat Log Pakan"])
+        UC6(["UC06: Kelola Slot Jadwal (Tambah/Edit/Hapus)"])
+        UC7(["UC07: Kalibrasi Sudut & Durasi Servo"])
+        UC8(["UC08: Sinkronisasi Jam Browser ke RTC DS3231"])
+        UC9(["UC09: Konfigurasi Wi-Fi (AP & Remote)"])
+        UC10(["UC10: Eksekusi Jadwal Mandiri (Offline RTC)"])
+        UC11(["UC11: Polling Command & Heartbeat"])
+    end
 
-rectangle "Smart Cat Feeder System" {
-    package "Autentikasi & Pengaturan Akun" {
-        usecase "UC01: Login ke Aplikasi" as UC_Login
-        usecase "UC02: Logout dari Aplikasi" as UC_Logout
-    }
+    User --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+    User --> UC8
+    User --> UC9
+
+    ESP --> UC10
+    ESP --> UC11
+    ESP --> UC3
     
-    package "Kontrol & Monitoring Pakan" {
-        usecase "UC03: Beri Pakan Manual (Feed Now)" as UC_FeedNow
-        usecase "UC04: Monitoring Status Online & Waktu RTC" as UC_Status
-        usecase "UC05: Lihat Riwayat Log Pakan" as UC_History
-    }
-    
-    package "Manajemen Jadwal Otomatis" {
-        usecase "UC06: Lihat Daftar Jadwal" as UC_ViewSched
-        usecase "UC07: Tambah Slot Jadwal Baru" as UC_AddSched
-        usecase "UC08: Ubah Waktu / Toggle Status Jadwal" as UC_EditSched
-        usecase "UC09: Hapus Slot Jadwal" as UC_DelSched
-        usecase "UC10: Eksekusi Pakan Terjadwal (Otonom)" as UC_ExecSched
-    }
-    
-    package "Kalibrasi Servo & Delay" {
-        usecase "UC11: Atur Sudut Tutup (Close Angle)" as UC_SetClose
-        usecase "UC12: Atur Sudut Buka (Open Angle)" as UC_SetOpen
-        usecase "UC13: Atur Durasi Terbuka (Feed Delay)" as UC_SetDelay
-        usecase "UC14: Lihat Riwayat Kalibrasi Servo" as UC_ServoLogs
-    }
-    
-    package "Konektivitas & Sinkronisasi" {
-        usecase "UC15: Sinkronisasi Jam HP ke DS3231 RTC" as UC_SyncRTC
-        usecase "UC16: Konfigurasi Wi-Fi Mode AP (192.168.4.1)" as UC_APWifi
-        usecase "UC17: Ganti Wi-Fi Jarak Jauh (Mode Server)" as UC_SrvWifi
-        usecase "UC18: Kirim Heartbeat & Poll Command" as UC_HeartbeatPoll
-    }
-}
+    RTC -.->|"Trigger Waktu Akurat"| UC10
+    RTC -.->|"Diselaraskan"| UC8
+```
 
-User --> UC_Login
-User --> UC_Logout
-User --> UC_FeedNow
-User --> UC_Status
-User --> UC_History
-User --> UC_ViewSched
-User --> UC_AddSched
-User --> UC_EditSched
-User --> UC_DelSched
-User --> UC_SetClose
-User --> UC_SetOpen
-User --> UC_SetDelay
-User --> UC_ServoLogs
-User --> UC_SyncRTC
-User --> UC_APWifi
-User --> UC_SrvWifi
+### 📋 Tabel Spesifikasi Use Case
 
-Device --> UC_HeartbeatPoll
-Device --> UC_ExecSched
-RTC --> UC_ExecSched
+| Kode UC | Nama Use Case | Aktor Utama | Deskripsi Fungsional |
+|:---:|:---|:---|:---|
+| **UC01** | Login & Registrasi Akun | User | Autentikasi akun admin dan pembuatan token Bearer API untuk sesi login 7 hari. |
+| **UC02** | Logout dari Portal | User | Menghapus token autentikasi di browser dan menghentikan polling background timer. |
+| **UC03** | Beri Pakan Manual (*Feed Now*) | User, ESP8266 | Mengirim perintah `FEED` ke antrean server yang segera dieksekusi oleh servo NodeMCU. |
+| **UC04** | Monitoring Status & Jam RTC | User | Memantau telemetri real-time (Online/Warning/Offline), waktu RTC, dan last seen. |
+| **UC05** | Lihat Riwayat Log Pakan | User | Menampilkan tabel log aktivitas pemberian pakan (jam, status sukses/gagal, dan slot). |
+| **UC06** | Kelola Slot Jadwal (1–6 Slot) | User | Menambah, mengubah jam/menit, mengaktifkan/menonaktifkan, atau menghapus slot jadwal. |
+| **UC07** | Kalibrasi Sudut & Durasi Servo | User | Mengatur sudut tutup (0°), sudut buka (90°), dan durasi terbuka katup (500–8000ms). |
+| **UC08** | Sinkronisasi Jam RTC DS3231 | User, RTC | Menyelaraskan waktu modul RTC DS3231 dengan waktu lokal browser perangkat admin. |
+| **UC09** | Konfigurasi Wi-Fi ESP8266 | User | Mengubah SSID & Password router via Mode AP Direct (`192.168.4.1`) atau Mode Remote Cloud. |
+| **UC10** | Eksekusi Jadwal Mandiri | ESP8266, RTC | Mengecek waktu RTC DS3231 tiap detik dan memutar servo otomatis walau tanpa internet. |
+| **UC11** | Polling Command & Heartbeat | ESP8266 | ESP8266 mengambil antrean perintah tiap 5 detik dan mengirim heartbeat tiap 10 detik. |
 
-UC_AddSched ..> UC_ViewSched : <<include>>
-UC_EditSched ..> UC_ViewSched : <<include>>
-UC_DelSched ..> UC_ViewSched : <<include>>
-@enduml
+---
+
+## 3. 🔄 Activity Diagram (Alur Kerja Utama)
+
+### A. Alur Pemberian Pakan Manual (Feed Now)
+Menggambarkan interaksi dari saat pengguna menekan tombol pada antarmuka hingga servo berputar dan status tercatat.
+
+```mermaid
+flowchart TD
+    Start([Mulai]) --> ClickFeed[Pengguna menekan tombol 'FEED NOW']
+    ClickFeed --> SendReq[Client POST /api/feed.php]
+    SendReq --> ChkPending{Ada command FEED<br/>pending di database?}
+    
+    ChkPending -- Ya --> RetPending[Tampilkan pesan: 'Masih dalam antrean'] --> End([Selesai])
+    ChkPending -- Tidak --> InsertCmd[Server INSERT commands 'FEED', status='pending']
+    InsertCmd --> ESPPoll[ESP8266 melakukan polling tiap 5 detik]
+    ESPPoll --> RecvCmd[ESP8266 menerima command 'FEED']
+    
+    RecvCmd --> OpenServo[Servo berputar ke SUDUT BUKA]
+    OpenServo --> WaitDelay[Tahan selama DURASI BUKA (ms)]
+    WaitDelay --> CloseServo[Servo kembali ke SUDUT TUTUP]
+    
+    CloseServo --> SendResult[ESP8266 POST /api/command_result.php]
+    SendResult --> UpdStatus[Server update status command='executed']
+    UpdStatus --> InsFeedLog[Server catat riwayat ke feeding_logs]
+    InsFeedLog --> End
 ```
 
 ---
 
-## 3. 🔄 Activity Diagram
-Menggambarkan alur aktivitas pemberian pakan baik secara **Manual (Feed Now)** maupun **Otomatis Berbasis Waktu RTC DS3231**.
+### B. Alur Eksekusi Jadwal Otomatis Mandiri (Offline RTC Safe)
+Menggambarkan logika eksekusi otonom pada NodeMCU yang berjalan setiap detik tanpa ketergantungan koneksi WiFi.
 
-```plantuml
-@startuml Activity_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-
-title Activity Diagram: Alur Eksekusi Pakan (Manual & Jadwal Otomatis)
-
-|User (Android App)|
-start
-:Buka Aplikasi & Login;
-if (Pilih Aksi?) then (Feed Now Manual)
-    :Klik tombol "FEED NOW";
-    :Kirim request POST /api/feed.php;
-    |Server Backend (PHP & MySQL)|
-    :Validasi Token Bearer & Device ID;
-    :Insert baris command 'FEED' (status: pending);
-    :Kirim respon 200 OK ke Android;
-    |User (Android App)|
-    :Tampilkan status "Menunggu respon alat...";
+```mermaid
+flowchart TD
+    Start([Loop Utama ESP8266]) --> ReadRTC[Baca waktu saat ini dari DS3231 RTC]
+    ReadRTC --> LoopSlots[Iterasi Slot Jadwal 1 s/d 6]
     
-    |NodeMCU ESP8266|
-    :Loop Polling (setiap 5 detik);
-    :Kirim GET /api/command_poll.php;
-    |Server Backend (PHP & MySQL)|
-    :Cari command pending terlama;
-    :Ubah status menjadi 'processing';
-    :Return data command ID & jenis 'FEED';
-    |NodeMCU ESP8266|
-    :Terima perintah 'FEED';
-else (Pakan Terjadwal Otomatis)
-    |NodeMCU ESP8266|
-    :Baca Waktu Sekarang dari Modul DS3231 RTC;
-    :Cek apakah jam & menit cocok dengan slot jadwal LittleFS;
-    if (Waktu Cocok & Belum Diberi Pakan Menit Ini?) then (Ya)
-        :Set trigger pakan terjadwal;
-    else (Tidak)
-        stop
-    endif
-endif
-
-|NodeMCU ESP8266|
-:Mulai Non-Blocking Servo State Machine;
-:Gerakkan Servo ke Sudut Buka (Open Angle);
-:Tunggu durasi pakan (Delay Durasi ms);
-:Gerakkan Servo ke Sudut Tutup (Close Angle);
-:Simpan log eksekusi pakan ke LittleFS (/feedlog.json);
-
-if (Terhubung ke Jaringan Wi-Fi?) then (Ya)
-    :Kirim POST /api/command_result.php (status: success);
-    :Kirim POST /api/device_status.php sync log;
-    |Server Backend (PHP & MySQL)|
-    :Update tabel commands (status: success, executed_at: NOW);
-    :Insert baris baru ke tabel feeding_logs;
-else (Offline)
-    |NodeMCU ESP8266|
-    :Antrekan log pakan di flash LittleFS;
-    :Sync log saat koneksi internet pulih kembali;
-endif
-
-|User (Android App)|
-:Refresh otomatis status & riwayat pakan;
-:Tampilkan badge "✅ Pakan Berhasil Diberikan";
-stop
-@enduml
-```
-
----
-
-## 4. ⏱️ Sequence Diagram
-Menggambarkan urutan pertukaran pesan antar aktor dan komponen saat perintah pakan instan dikirimkan.
-
-```plantuml
-@startuml Sequence_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-autonumber
-
-actor "User" as User
-participant "Android App\n(Kivy)" as App
-participant "Backend API\n(PHP)" as Api
-database "MySQL\nDatabase" as DB
-participant "NodeMCU ESP8266\n(Firmware)" as ESP
-participant "DS3231 RTC\n(I2C Sensor)" as RTC
-participant "Servo SG90\n(Actuator)" as Servo
-
-== 1. Autentikasi Pengguna ==
-User -> App : Masukkan Username & Password
-App -> Api : POST /api/auth.php?action=login\n{username, password}
-Api -> DB : SELECT * FROM android_users WHERE username = ?
-DB --> Api : Return hash password & user data
-Api -> Api : Verify password_hash & generate API Token
-Api -> DB : UPDATE android_users SET api_token, expires_at
-Api --> App : 200 OK {token, expires_at, device_id}
-App -> App : Simpan sesi ke session.json & Buka Dashboard
-
-== 2. Pengiriman Perintah Pakan (Feed Now) ==
-User -> App : Klik Tombol "🍖 FEED NOW"
-App -> Api : POST /api/feed.php\nHeader: Bearer <token>\nBody: {device_id: "CAT_FEEDER_01"}
-Api -> DB : SELECT status FROM devices WHERE device_id = ?
-Api -> DB : INSERT INTO commands (device_id, command, status)\nVALUES ('CAT_FEEDER_01', 'FEED', 'pending')
-DB --> Api : Return command_id: 31
-Api --> App : 200 OK {success: true, command_id: 31}
-App --> User : Update status: "Menunggu alat mengeksekusi..."
-
-== 3. Polling Perintah oleh ESP8266 ==
-loop Setiap 5 Detik (Non-blocking Timer)
-    ESP -> Api : GET /api/command_poll.php\nHeaders: X-Device-Id, X-Device-Token
-    Api -> DB : SELECT * FROM commands WHERE device_id = ? AND status = 'pending' LIMIT 1
-    DB --> Api : Return row (command_id: 31, command: 'FEED')
-    Api -> DB : UPDATE commands SET status = 'processing' WHERE id = 31
-    Api --> ESP : 200 OK {command_id: 31, command: 'FEED'}
-end
-
-== 4. Eksekusi Pergerakan Servo ==
-ESP -> RTC : Baca waktu real-time (I2C)
-RTC --> ESP : 2026-09-01 12:30:00
-ESP -> Servo : write(servoOpenAngle: 90°)
-ESP -> ESP : Non-blocking delay (feedDurationMs: 2000ms)
-ESP -> Servo : write(servoCloseAngle: 0°)
-ESP -> ESP : Catat log ke LittleFS (/feedlog.json)
-
-== 5. Pelaporan Status Eksekusi (Result Callback) ==
-ESP -> Api : POST /api/command_result.php\nBody: {command_id: 31, status: "success", executed_at: "2026-09-01 12:30:02"}
-Api -> DB : UPDATE commands SET status = 'success', executed_at = NOW() WHERE id = 31
-Api -> DB : INSERT INTO feeding_logs (device_id, type, status, executed_at)\nVALUES ('CAT_FEEDER_01', 'manual', 'success', NOW())
-Api --> ESP : 200 OK {success: true}
-
-== 6. Update Real-Time Tampilan Aplikasi ==
-App -> Api : GET /api/device_status.php?action=status
-Api -> DB : Query status device, last_seen, last_feeding
-DB --> Api : Data status terbaru
-Api --> App : 200 OK {status: "online", last_feeding: {...}}
-App --> User : Tampilkan badge "✅ Pakan Berhasil Diberikan"
-@enduml
-```
-
----
-
-## 5. 🗄️ Entity Relationship Diagram (ERD)
-Struktur entitas database relasional `smart_cat_feeder` di MySQL / MariaDB.
-
-```plantuml
-@startuml ERD_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-skinparam linetype ortho
-
-entity "devices" as dev {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * **device_id** : VARCHAR(50) <<UK>>
-  * device_name : VARCHAR(100)
-  * api_key_hash : VARCHAR(255)
-  last_seen : DATETIME
-  status : ENUM('online','offline','unknown')
-  * created_at : DATETIME
-  * updated_at : DATETIME
-}
-
-entity "android_users" as usr {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * **username** : VARCHAR(50) <<UK>>
-  * password_hash : VARCHAR(255)
-  api_token : VARCHAR(64)
-  token_expires : DATETIME
-  * device_id : VARCHAR(50) <<FK>>
-  * created_at : DATETIME
-}
-
-entity "device_settings" as stg {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * **device_id** : VARCHAR(50) <<FK, UK>>
-  * close_angle : SMALLINT UNSIGNED
-  * open_angle : SMALLINT UNSIGNED
-  * duration_ms : INT UNSIGNED
-  * updated_at : DATETIME
-}
-
-entity "settings_logs" as slog {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * device_id : VARCHAR(50) <<FK>>
-  * close_angle : SMALLINT UNSIGNED
-  * open_angle : SMALLINT UNSIGNED
-  * duration_ms : INT UNSIGNED
-  * changed_by : VARCHAR(50)
-  * created_at : DATETIME
-}
-
-entity "schedules" as sch {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * device_id : VARCHAR(50) <<FK>>
-  * slot : TINYINT UNSIGNED
-  * enabled : TINYINT(1)
-  * hour : TINYINT UNSIGNED
-  * minute : TINYINT UNSIGNED
-  * updated_at : DATETIME
-}
-
-entity "commands" as cmd {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * device_id : VARCHAR(50) <<FK>>
-  * command : VARCHAR(50)
-  payload : JSON
-  * status : ENUM('pending','processing','success','failed')
-  * created_at : DATETIME
-  executed_at : DATETIME
-}
-
-entity "feeding_logs" as flog {
-  * **id** : INT <<PK, AUTO_INCREMENT>>
-  --
-  * device_id : VARCHAR(50) <<FK>>
-  * type : ENUM('manual','schedule')
-  schedule_slot : TINYINT UNSIGNED
-  * status : ENUM('success','failed')
-  * executed_at : DATETIME
-  * synced : TINYINT(1)
-  * created_at : DATETIME
-}
-
-dev ||--o{ usr : "1 to N"
-dev ||--|| stg : "1 to 1"
-dev ||--o{ slog : "1 to N"
-dev ||--o{ sch : "1 to N"
-dev ||--o{ cmd : "1 to N"
-dev ||--o{ flog : "1 to N"
-@enduml
-```
-
----
-
-## 6. 🧱 Class & Component Diagram
-Struktur kelas object-oriented pada aplikasi Frontend Python Kivy dan Firmware ESP8266.
-
-```plantuml
-@startuml Class_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-skinparam classAttributeIconSize 0
-
-package "Kivy Mobile Frontend (app/frontend/main.py)" {
-    class SmartCatFeederApp {
-        + build() : RootLayout
-    }
-    class RootLayout {
-        - _open : Boolean
-        + open_drawer() : void
-        + close_drawer() : void
-        + refresh_page() : void
-        + logout() : void
-    }
-    class LeftDrawer {
-        + username_label : String
-        + navigate(screen_name: String) : void
-        + do_logout() : void
-    }
-    class MainScreen {
-        + active_tab : String
-        + init(server_url, token, username, root_ref) : void
-        + go_to(target: String) : void
-    }
-    class BasePage {
-        + root_ref : RootLayout
-        + on_enter() : void
-        + refresh() : void
-        # _get(path, cb, **params) : void
-        # _post(path, payload, cb) : void
-    }
-    class PageDash {
-        + send_feed() : void
-        + sync_rtc() : void
-        + go_wifi() : void
-    }
-    class PageSched {
-        + add_slot() : void
-        + save_all() : void
-    }
-    class PageServo {
-        + save_settings(ca, oa, dur) : void
-        + load_history() : void
-    }
-    class PageHist {
-        + load() : void
-    }
-    class PageWifi {
-        + set_mode(ap: Boolean) : void
-        + send() : void
-    }
-
-    SmartCatFeederApp --> RootLayout
-    RootLayout *-- LeftDrawer
-    RootLayout *-- MainScreen
-    MainScreen *-- BasePage
-    BasePage <|-- PageDash
-    BasePage <|-- PageSched
-    BasePage <|-- PageServo
-    BasePage <|-- PageHist
-    BasePage <|-- PageWifi
-}
-
-package "NodeMCU ESP8266 Firmware (app/nodemcu/nodemcu.ino)" {
-    class FeederFirmware <<ESP8266 Engine>> {
-        - servoCloseAngle : int = 0
-        - servoOpenAngle : int = 90
-        - feedDurationMs : int = 2000
-        - feedingState : FeedingState
-        + setup() : void
-        + loop() : void
-        + handleServerPolling() : void
-        + handleHeartbeat() : void
-        + handleScheduleCheck() : void
-        + handleServoStateMachine() : void
-        + startFeeding(slot: int) : void
-    }
-    enum FeedingState {
-        IDLE
-        OPENING
-        HOLDING
-        CLOSING
-        SETTLING
-    }
-    FeederFirmware *-- FeedingState
-}
-@enduml
-```
-
----
-
-## 7. ⚙️ State Machine Diagram
-Siklus pergerakan servo non-blocking dan penanganan konektivitas Wi-Fi (AP Hotspot vs Client Station).
-
-```plantuml
-@startuml State_Machine_Diagram
-!theme plain
-skinparam backgroundColor #FFFFFF
-
-state "Servo Feeding State Machine" as ServoSM {
-    [*] --> FEED_IDLE
-    FEED_IDLE --> FEED_OPENING : startFeeding(slot)\n[Trigger Manual / Jadwal Cocok]
-    FEED_OPENING : Entry: servoMoveTo(servoOpenAngle)
-    FEED_OPENING --> FEED_HOLDING : setelah SERVO_SETTLE (400ms)
-    FEED_HOLDING : Katup terbuka penuh (makanan mengalir)
-    FEED_HOLDING --> FEED_CLOSING : setelah feedDurationMs (misal 2000ms)
-    FEED_CLOSING : Entry: servoMoveTo(servoCloseAngle)
-    FEED_CLOSING --> FEED_SETTLING : setelah SERVO_SETTLE (400ms)
-    FEED_SETTLING : Simpan riwayat ke LittleFS & update status
-    FEED_SETTLING --> FEED_IDLE : Selesai
-}
-
-state "WiFi Connectivity State Machine" as WifiSM {
-    [*] --> STATE_CONNECTING : Boot / Restart
-    STATE_CONNECTING : Coba koneksi ke SSID tersimpan (Timeout 20s)
-    STATE_CONNECTING --> STATE_CONNECTED : Sukses Dapat IP LAN
-    STATE_CONNECTING --> STATE_AP_MODE : Gagal / Kredensial Kosong
+    LoopSlots --> CheckSlot{Slot Aktif &<br/>Jam:Menit Cocok?}
+    CheckSlot -- Tidak --> NextSlot[Lanjut ke slot berikutnya] --> LoopSlots
     
-    STATE_CONNECTED : Heartbeat (10s), Polling (5s), Sync Log (2m)
-    STATE_AP_MODE : Hotspot 'CatFeeder-Setup' @ 192.168.4.1
+    CheckSlot -- Ya --> CheckDup{Sudah diberi pakan<br/>pada slot & tanggal ini?}
+    CheckDup -- Ya --> NextSlot
+    CheckDup -- Tidak --> TriggerFeed[Tandai slot & tanggal hari ini]
     
-    STATE_CONNECTED --> STATE_CONNECTING : WiFi Terputus
-    STATE_AP_MODE --> STATE_CONNECTING : Kredensial Baru Diterima -> Simpan & Restart
-}
-@enduml
+    TriggerFeed --> ExecServo[Gerakkan Servo (Buka -> Tahan -> Tutup)]
+    ExecServo --> ChkWifi{WiFi Terkoneksi?}
+    
+    ChkWifi -- Ya --> SendLogDirect[POST log langsung ke /api/device_status.php]
+    ChkWifi -- Tidak --> SaveLittleFS[Simpan log ke LittleFS /feedlog.json]
+    SaveLittleFS --> SyncLater[Sinkronkan otomatis saat WiFi pulih]
+    
+    SendLogDirect --> EndLoop([Selesai Putaran Loop])
+    SyncLater --> EndLoop
 ```
 
 ---
 
-## 🛠️ Cara Render / Ekspor Diagram PlantUML
-File-file diagram individual berekstensi `.puml` tersimpan di direktori:
-👉 **[`docs/plantuml/`](file:///c:/Users/LENOVO/Desktop/Pakan-kucing/docs/plantuml/)**
+## 4. ⏱️ Sequence Diagram (Interaksi Komunikasi)
 
-Untuk mengonversi diagram menjadi file gambar PNG/SVG:
-1. **Online:** Copy-paste kode ke [PlantUML Online Server](https://www.plantuml.com/plantuml/uml/).
-2. **VS Code:** Gunakan ekstensi *PlantUML* (oleh Jebbs) dan tekan `Alt + D` untuk preview langsung.
-3. **CLI:** Jalankan `java -jar plantuml.jar docs/plantuml/*.puml`.
+### Interaksi End-to-End: Perintah Kasih Pakan Manual (Manual Feed)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as 👤 Pengguna
+    participant Web as 🌐 Web / Mobile App
+    participant Server as ☁️ Backend API & DB
+    participant ESP as ⚡ NodeMCU ESP8266
+    participant Servo as ⚙️ Motor Servo
+
+    User->>Web: Klik "KASIH PAKAN SEKARANG"
+    Web->>Server: POST /api/feed.php {device_id} [Bearer Token]
+    Server->>Server: Validasi Token & Cek Duplikasi Antrean
+    Server->>Server: INSERT INTO commands (command="FEED", status="pending")
+    Server-->>Web: 200 OK {"success": true, "command_id": 101}
+    Web-->>User: Tampilkan Toast: "Perintah terkirim ke antrean"
+
+    Note over ESP,Server: Polling Cycle (Setiap 5 Detik)
+    ESP->>Server: GET /api/command_poll.php [X-Device-ID, X-Device-Token]
+    Server->>Server: Ambil command status 'pending' terlama
+    Server->>Server: UPDATE commands SET status="processing"
+    Server-->>ESP: 200 OK {"command": "FEED", "id": 101}
+
+    Note over ESP,Servo: Eksekusi Mekanikal
+    ESP->>Servo: Putar ke Sudut Buka (misal: 90°)
+    ESP->>ESP: Tunggu Durasi Buka (misal: 2000 ms)
+    ESP->>Servo: Putar ke Sudut Tutup (misal: 0°)
+
+    ESP->>Server: POST /api/command_result.php {command_id: 101, status: "executed"}
+    Server->>Server: UPDATE commands SET status="executed", executed_at=NOW()
+    Server->>Server: INSERT INTO feeding_logs (type="manual", status="success")
+    Server-->>ESP: 200 OK {"ack": true}
+```
+
+---
+
+## 5. 🗄️ Entity Relationship Diagram (ERD Database)
+
+Struktur tabel relasional database `smart_cat_feeder` dinormalisasi untuk mendukung multi-user, multi-perangkat, audit riwayat, dan antrean perintah.
+
+```mermaid
+erDiagram
+    devices ||--o{ android_users : "memiliki"
+    devices ||--o{ device_settings : "memiliki pengaturan"
+    devices ||--o{ settings_logs : "riwayat kalibrasi"
+    devices ||--o{ schedules : "memiliki slot jadwal"
+    devices ||--o{ feeding_logs : "riwayat pakan"
+    devices ||--o{ commands : "antrean perintah"
+
+    devices {
+        int id PK
+        varchar device_id UK "Unique Hardware ID (e.g. CAT_FEEDER_01)"
+        varchar device_name "Nama Alat"
+        varchar api_key_hash "SHA256 Token Auth Device"
+        enum status "'online', 'offline', 'warning'"
+        datetime last_seen "Waktu Terakhir Aktif"
+        datetime rtc_time "Waktu Aktual RTC Perangkat"
+        datetime created_at
+        datetime updated_at
+    }
+
+    android_users {
+        int id PK
+        varchar username UK
+        varchar password_hash "Bcrypt Hash Password"
+        varchar api_token UK "Bearer API Token"
+        datetime token_expires "Masa Berlaku Token (7 Hari)"
+        varchar device_id FK "Terkait ke devices.device_id"
+        datetime created_at
+    }
+
+    device_settings {
+        int id PK
+        varchar device_id UK,FK
+        int close_angle "Sudut Tutup (0 - 180°)"
+        int open_angle "Sudut Buka (0 - 180°)"
+        int duration_ms "Durasi Terbuka (500 - 10000 ms)"
+        datetime updated_at
+    }
+
+    settings_logs {
+        int id PK
+        varchar device_id FK
+        int close_angle
+        int open_angle
+        int duration_ms
+        varchar changed_by "Username Pengubah"
+        datetime created_at
+    }
+
+    schedules {
+        int id PK
+        varchar device_id FK
+        int slot "Nomor Slot (1 s/d 6)"
+        boolean enabled "Status Aktif (1/0)"
+        int hour "Jam (0 - 23)"
+        int minute "Menit (0 - 59)"
+        datetime updated_at
+    }
+
+    feeding_logs {
+        int id PK
+        varchar device_id FK
+        enum type "'manual', 'schedule'"
+        int schedule_slot "Nomor slot jika jadwal"
+        enum status "'success', 'failed'"
+        datetime executed_at "Waktu Eksekusi"
+        boolean synced "1: Server, 0: Offline Queue"
+    }
+
+    commands {
+        int id PK
+        varchar device_id FK
+        varchar command "FEED, SET_RTC, SET_SERVO_CONFIG, SET_SCHEDULE, SET_WIFI"
+        text payload "JSON Parameter Tambahan"
+        enum status "'pending', 'processing', 'executed', 'failed'"
+        datetime created_at
+        datetime executed_at
+    }
+```
+
+---
+
+## 6. 🧱 Class Diagram & Struktur Komponen
+
+Struktur modul perangkat lunak pada lapisan Web Frontend, REST Backend, dan Firmware NodeMCU.
+
+```mermaid
+classDiagram
+    class WebAdminController {
+        +String serverUrl
+        +String token
+        +String deviceId
+        +api(method, path, body)
+        +doAuth()
+        +sendFeed()
+        +syncRtc()
+        +loadSchedule()
+        +saveSchedule()
+        +loadServoSettings()
+        +saveServo()
+        +sendWifi()
+    }
+
+    class PHPDatabaseConfig {
+        +getDB() PDO
+        +jsonResponse(success, msg, data, code)
+        +validateAndroidUser() Array
+        +validateDevice() Array
+        +rateLimit(maxReq, windowSec)
+    }
+
+    class FeedApiController {
+        +handleFeedRequest()
+        +checkPendingCommand()
+        +createCommand()
+    }
+
+    class ScheduleApiController {
+        +getSchedules(deviceId)
+        +saveSchedules(deviceId, schedulesList)
+    }
+
+    class ServoApiController {
+        +getSettings(deviceId)
+        +setSettings(deviceId, close, open, dur)
+        +getCalibrationLogs(deviceId)
+    }
+
+    class ESP8266FirmwareEngine {
+        -int servoCloseAngle
+        -int servoOpenAngle
+        -int feedDurationMs
+        -Schedule schedules[6]
+        +setup()
+        +loop()
+        +updateWifi()
+        +checkSchedule()
+        +pollCommands()
+        +sendHeartbeat()
+        +executeFeeding(slot)
+        +saveToLittleFS()
+        +syncOfflineLogs()
+    }
+
+    WebAdminController --> PHPDatabaseConfig : REST API Calls
+    FeedApiController ..> PHPDatabaseConfig : Database Access
+    ScheduleApiController ..> PHPDatabaseConfig : Database Access
+    ServoApiController ..> PHPDatabaseConfig : Database Access
+    ESP8266FirmwareEngine --> PHPDatabaseConfig : HTTP Polling & Result
+```
+
+---
+
+## 7. ⚙️ State Machine Diagram (NodeMCU Firmware)
+
+Firmware NodeMCU mengoperasikan dua mesin keadaan (*finite state machine*) utama secara non-blocking (*tanpa `delay()` blocker*):
+
+### A. State Machine Koneksi Wi-Fi
+```mermaid
+stateDiagram-v2
+    [*] --> CONNECTING : Boot / Restart
+    CONNECTING --> CONNECTED : Wi-Fi Terhubung (IP Didapat)
+    CONNECTING --> RETRY : Timeout (> 15 detik)
+    RETRY --> CONNECTING : Interval Ulang (Tiap 30 detik)
+    
+    CONNECTED --> CONNECTING : Sinyal Wi-Fi Terputus
+    
+    CONNECTING --> AP_MODE : Jika Tidak Ada Kredensial Wi-Fi
+    RETRY --> AP_MODE : Tombol / Perintah Masuk AP
+    AP_MODE --> CONNECTING : Kredensial Baru Diterima via HTTP & Restart
+```
+
+### B. State Machine Motor Servo (Feeding Cycle)
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE : Siap Siaga
+    IDLE --> OPENING : Pemicu Manual atau Waktu RTC Cocok
+    OPENING --> OPEN_WAIT : Servo Sampai di Sudut Buka (e.g. 90°)
+    OPEN_WAIT --> CLOSING : Waktu Terbuka >= feedDurationMs (e.g. 2000ms)
+    CLOSING --> DONE : Servo Kembali ke Sudut Tutup (0°)
+    DONE --> IDLE : Jeda Settle Selesai (400ms) & Log Tercatat
+```
+
+---
+
+## 8. 🔌 Spesifikasi Pinout & Pengkabelan Hardware
+
+| No | Komponen Hardware | Pin Modul | Pin NodeMCU ESP8266 | Fungsi / Deskripsi |
+|:---:|:---|:---:|:---:|:---|
+| **1** | **Modul RTC DS3231** | `VCC` | `3V3 / 3.3V` | Catu daya modul pewaktu presisi tinggi |
+| **2** | | `GND` | `GND` | Ground bersama |
+| **3** | | `SDA` | `D2 (GPIO 4)` | Jalur Komunikasi Data Serial I2C |
+| **4** | | `SCL` | `D1 (GPIO 5)` | Jalur Sinyal Clock Serial I2C |
+| **5** | **Motor Servo (SG90/MG996R)** | `VCC (+)` | `VIN / 5V` | Sumber daya motor (*disarankan 5V 1A external*) |
+| **6** | | `GND (-)` | `GND` | Ground bersama (*common ground*) |
+| **7** | | `Signal (PWM)` | `D5 (GPIO 14)` | Sinyal modulasi lebar pulsa kontrol sudut servo |
+
+> **Catatan Pengkabelan:**
+> - Pastikan ground (GND) dari power supply eksternal dihubungkan bersama (*common ground*) dengan pin GND NodeMCU.
+> - Modul DS3231 dilengkapi baterai koin CR2032 cadangan agar jam tetap berjalan ketika catu daya listrik utama mati.
+
+---
+
+## 9. 🌐 Ringkasan Spesifikasi REST API
+
+| Method | Endpoint API | Deskripsi | Header Autentikasi | Body Parameter Utama |
+|:---:|:---|:---|:---|:---|
+| **POST** | `/api/auth.php?action=login` | Login user Android/Web | `-` | `{"username", "password"}` |
+| **POST** | `/api/auth.php?action=register` | Registrasi user baru | `-` | `{"username", "password", "device_id"}` |
+| **GET** | `/api/device_status.php?action=status` | Telemetri online & jam RTC | `Authorization: Bearer <token>` | `-` |
+| **GET** | `/api/device_status.php?action=feeding-log` | Riwayat log pakan | `Authorization: Bearer <token>` | `limit=30` |
+| **POST** | `/api/feed.php` | Kirim perintah pakan manual | `Authorization: Bearer <token>` | `{"device_id"}` |
+| **POST** | `/api/rtc.php?action=set` | Sinkronisasi jam RTC | `Authorization: Bearer <token>` | `{"datetime": "YYYY-MM-DD HH:MM:SS"}` |
+| **GET** | `/api/schedule.php` | Ambil 6 slot jadwal | `Authorization: Bearer <token>` | `-` |
+| **POST** | `/api/schedule.php` | Simpan seluruh slot jadwal | `Authorization: Bearer <token>` | `{"schedules": [...]}` |
+| **GET** | `/api/servo_settings.php?action=get` | Ambil setting sudut servo | `Authorization: Bearer <token>` | `-` |
+| **POST** | `/api/servo_settings.php?action=set` | Simpan kalibrasi servo | `Authorization: Bearer <token>` | `{"close_angle", "open_angle", "duration_ms"}` |
+| **POST** | `/api/wifi_set.php` | Ganti WiFi via server | `Authorization: Bearer <token>` | `{"device_id", "ssid", "password"}` |
+| **GET** | `/api/command_poll.php` | Polling command ESP8266 | `X-Device-ID`, `X-Device-Token` | `-` |
+| **POST** | `/api/command_result.php` | Kirim hasil eksekusi ESP | `X-Device-ID`, `X-Device-Token` | `{"command_id", "status"}` |
+| **POST** | `/api/heartbeat.php` | Heartbeat & sinkron RTC | `X-Device-ID`, `X-Device-Token` | `{"rtc_time", "wifi_rssi"}` |
+
+---
+
+*Dokumen ini dirancang sebagai acuan standar arsitektur, pengujian, dan pemeliharaan sistem Smart Cat Feeder Pro.*

@@ -65,22 +65,22 @@ Smart Cat Feeder adalah sistem IoT yang memungkinkan pemilik kucing mengontrol p
               │                           │
               ▼                           ▼
 
-       📱 RUMAH Z                    🏠 RUMAH A
-       ANDROID                      HOME SERVER
-       Python/Kivy                  PHP REST API
-              │                     MySQL/MariaDB
+       🌐 CLIENT                    ☁️ SERVER
+       WEB ADMIN PORTAL             REST API (PHP)
+       HTML5 / CSS / JS             MySQL Database
+              │                           │
               │ HTTPS                     │
               │                           │
-              └──────────────┬────────────┘
-                             │
-                             ▼
-                       🏠 RUMAH B
-                       ESP8266
-                           │
-                  ┌────────┴────────┐
-                  │                 │
-               DS3231             SERVO
-               RTC                Feeder
+              └─────────────┬─────────────┘
+                            │
+                            ▼
+                      🐾 IOT DEVICE
+                      ESP8266
+                          │
+                 ┌────────┴────────┐
+                 │                 │
+              DS3231             SERVO
+              RTC (I2C)          Feeder (PWM)
 ```
 
 ### Pola Komunikasi
@@ -172,17 +172,14 @@ smart-cat-feeder/
 | `schedules` | Konfigurasi jadwal feeding per device |
 | `feeding_logs` | Riwayat semua feeding (manual & terjadwal) |
 
-### 7.4 Android App (Python + Kivy)
+### 7.4 Web Administrator Portal (HTML5 + CSS + Vanilla JS)
 
 **File:**
 
 | File | Fungsi |
 |---|---|
-| `main.py` | Entry point, logika utama, threading |
-| `api.py` | HTTP client wrapper (requests) |
-| `storage.py` | Local storage konfigurasi Android |
-| `ui.kv` | Deklarasi UI Kivy |
-| `buildozer.spec` | Konfigurasi build APK |
+| `index.html` | Portal Administrator tunggal (Dashboard, Telemetri, Feed Now, Slot Jadwal, Kalibrasi Servo, Riwayat Log, Setup WiFi) |
+| `start_app.bat` | Launcher 1-klik untuk membuka dashboard di browser |
 
 ---
 

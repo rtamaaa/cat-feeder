@@ -1,19 +1,21 @@
 @echo off
 chcp 65001 >nul
-title Smart Cat Feeder Pro - App Launcher
+title Smart Cat Feeder Pro - Web Dashboard Launcher
 cd /d "%~dp0"
 
-if exist "dist\SmartCatFeederPro\SmartCatFeederPro.exe" (
-    echo Menjalankan Smart Cat Feeder Pro (.exe)...
-    start "" "dist\SmartCatFeederPro\SmartCatFeederPro.exe"
-    exit /b 0
+echo ============================================================
+echo   🐱 SMART CAT FEEDER PRO - WEB PORTAL LAUNCHER
+echo ============================================================
+echo.
+echo Membuka dashboard administrator di browser...
+echo.
+
+if exist "app\frontend\index.html" (
+    start "" "app\frontend\index.html"
+) else (
+    start "" "http://localhost/smart-cat-feeder/"
 )
 
-echo Menjalankan Smart Cat Feeder Pro (Python)...
-python app\frontend\main.py
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo Application stopped with error code %ERRORLEVEL%
-    pause
-)
-
+echo Dashboard berhasil diluncurkan!
+timeout /t 3 >nul
+exit /b 0

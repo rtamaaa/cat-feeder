@@ -6,7 +6,7 @@ autonumber
 title Sequence Diagram: End-to-End Feed Now, Command Polling & Execution
 
 actor "User" as User
-participant "Android App\n(Kivy)" as App
+participant "Web Admin Portal\n(HTML5 / JS)" as App
 participant "Backend API\n(PHP)" as Api
 database "MySQL\nDatabase" as DB
 participant "NodeMCU ESP8266\n(Firmware)" as ESP
@@ -21,16 +21,16 @@ DB --> Api : Return hash password & user data
 Api -> Api : Verify password_hash & generate API Token
 Api -> DB : UPDATE android_users SET api_token, expires_at
 Api --> App : 200 OK {token, expires_at, device_id}
-App -> App : Simpan sesi ke session.json & Buka Dashboard
+App -> App : Simpan sesi ke localStorage & Buka Dashboard
 
 == 2. Pengiriman Perintah Pakan (Feed Now) ==
-User -> App : Klik Tombol "🍖 FEED NOW"
+User -> App : Klik Tombol "🍖 KASIH PAKAN SEKARANG"
 App -> Api : POST /api/feed.php\nHeader: Bearer <token>\nBody: {device_id: "CAT_FEEDER_01"}
 Api -> DB : SELECT status FROM devices WHERE device_id = ?
 Api -> DB : INSERT INTO commands (device_id, command, status)\nVALUES ('CAT_FEEDER_01', 'FEED', 'pending')
 DB --> Api : Return command_id: 31
 Api --> App : 200 OK {success: true, command_id: 31}
-App --> User : Update status: "Menunggu alat mengeksekusi..."
+App --> User : Update status: "Perintah terkirim ke antrean..."
 
 == 3. Polling Perintah oleh ESP8266 ==
 loop Setiap 5 Detik (Non-blocking Timer)

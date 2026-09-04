@@ -9,16 +9,16 @@ skinparam nodeBorderColor #1E293B
 
 title Arsitektur Sistem Smart Cat Feeder Pro
 
-node "Mobile / Desktop Client" as ClientNode {
-    [Aplikasi Android (Kivy / Python)] as KivyApp
-    component "UI Layer\n(BottomNav + Drawer)" as UILayer
-    component "API Service\n(Requests HTTP)" as HttpService
+node "Web Client / Browser" as ClientNode {
+    [Web Administrator Portal (HTML5 / CSS / JS)] as WebApp
+    component "UI Layer\n(Sidebar + Telemetry Grid)" as UILayer
+    component "Fetch API Client\n(JSON Requests)" as HttpService
     
-    KivyApp --> UILayer
+    WebApp --> UILayer
     UILayer --> HttpService
 }
 
-node "Server Backend (Apache / Laragon)" as ServerNode {
+node "Server Backend (Apache / aaPanel / Laragon)" as ServerNode {
     package "REST API Services (PHP)" as ApiPackage {
         [auth.php] as ApiAuth
         [device_status.php] as ApiStatus
@@ -65,7 +65,7 @@ node "IoT Hardware Device (Cat Feeder)" as HardwareNode {
 }
 
 ' Interactions
-HttpService --> ApiPackage : HTTP / JSON (Port 80)\n[Bearer Token Auth]
+HttpService --> ApiPackage : HTTPS / JSON (Port 443)\n[Bearer Token Auth]
 EspWifi --> ApiPackage : HTTP / JSON (Polling 5s, Heartbeat 10s)\n[Device Header Auth]
 
 @enduml

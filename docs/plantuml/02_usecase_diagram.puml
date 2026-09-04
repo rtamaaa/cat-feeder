@@ -2,50 +2,53 @@
 !theme plain
 skinparam backgroundColor #FFFFFF
 skinparam actorStyle awesome
+skinparam usecaseBackgroundColor #F8FAFC
+skinparam usecaseBorderColor #2563EB
+skinparam packageBackgroundColor #F1F5F9
+skinparam packageBorderColor #334155
 
 left to right direction
 
-actor "Pemilik Kucing (User)" as User
+actor "Administrator / Pemilik Kucing" as User
 actor "NodeMCU ESP8266 (Device)" as Device
-actor "Modul DS3231 RTC (Timer)" as RTC
+actor "Modul DS3231 RTC (Hardware Timer)" as RTC
 
-rectangle "Smart Cat Feeder System" {
+rectangle "Smart Cat Feeder - Web IoT Portal" {
     
-    package "Autentikasi & Pengaturan Akun" {
-        usecase "UC01: Login ke Aplikasi" as UC_Login
-        usecase "UC02: Logout dari Aplikasi" as UC_Logout
+    package "1. Autentikasi & Akun" {
+        usecase "UC01: Login & Registrasi Akun" as UC_Login
+        usecase "UC02: Logout dari Web Portal" as UC_Logout
     }
     
-    package "Kontrol & Monitoring Pakan" {
+    package "2. Monitoring & Kontrol Pakan" {
         usecase "UC03: Beri Pakan Manual (Feed Now)" as UC_FeedNow
-        usecase "UC04: Monitoring Status Online & Waktu RTC" as UC_Status
+        usecase "UC04: Monitoring Status Telemetri & Jam RTC" as UC_Status
         usecase "UC05: Lihat Riwayat Log Pakan" as UC_History
     }
     
-    package "Manajemen Jadwal Otomatis" {
-        usecase "UC06: Lihat Daftar Jadwal" as UC_ViewSched
-        usecase "UC07: Tambah Slot Jadwal Baru" as UC_AddSched
-        usecase "UC08: Ubah Waktu / Toggle Status Jadwal" as UC_EditSched
+    package "3. Manajemen Jadwal Otomatis" {
+        usecase "UC06: Lihat Daftar Slot Jadwal" as UC_ViewSched
+        usecase "UC07: Tambah Slot Jadwal Makan" as UC_AddSched
+        usecase "UC08: Atur Jam & Toggle ON/OFF Jadwal" as UC_EditSched
         usecase "UC09: Hapus Slot Jadwal" as UC_DelSched
-        usecase "UC10: Eksekusi Pakan Terjadwal (Otonom)" as UC_ExecSched
+        usecase "UC10: Simpan Jadwal ke Server & LittleFS" as UC_SaveSched
+        usecase "UC11: Eksekusi Jadwal Mandiri (Offline RTC)" as UC_ExecSched
     }
     
-    package "Kalibrasi Servo & Delay" {
-        usecase "UC11: Atur Sudut Tutup (Close Angle)" as UC_SetClose
-        usecase "UC12: Atur Sudut Buka (Open Angle)" as UC_SetOpen
-        usecase "UC13: Atur Durasi Terbuka (Feed Delay)" as UC_SetDelay
-        usecase "UC14: Lihat Riwayat Kalibrasi Servo" as UC_ServoLogs
+    package "4. Kalibrasi Servo Katup" {
+        usecase "UC12: Kalibrasi Sudut Buka/Tutup & Durasi Servo" as UC_SetServo
+        usecase "UC13: Lihat Riwayat Kalibrasi Servo" as UC_ServoLogs
     }
     
-    package "Konektivitas & Sinkronisasi" {
-        usecase "UC15: Sinkronisasi Jam HP ke DS3231 RTC" as UC_SyncRTC
-        usecase "UC16: Konfigurasi Wi-Fi Mode AP (192.168.4.1)" as UC_APWifi
-        usecase "UC17: Ganti Wi-Fi Jarak Jauh (Mode Server)" as UC_SrvWifi
-        usecase "UC18: Kirim Heartbeat & Poll Command" as UC_HeartbeatPoll
+    package "5. Konektivitas & Sinkronisasi" {
+        usecase "UC14: Sinkronisasi Jam Browser ke RTC DS3231" as UC_SyncRTC
+        usecase "UC15: Konfigurasi Wi-Fi Mode AP Direct (192.168.4.1)" as UC_APWifi
+        usecase "UC16: Konfigurasi Wi-Fi Jarak Jauh (Mode Remote Cloud)" as UC_SrvWifi
+        usecase "UC17: Polling Command & Kirim Heartbeat" as UC_HeartbeatPoll
     }
 }
 
-' Hubungan User
+' Relasi Administrator / Pemilik Kucing
 User --> UC_Login
 User --> UC_Logout
 User --> UC_FeedNow
@@ -55,21 +58,24 @@ User --> UC_ViewSched
 User --> UC_AddSched
 User --> UC_EditSched
 User --> UC_DelSched
-User --> UC_SetClose
-User --> UC_SetOpen
-User --> UC_SetDelay
+User --> UC_SaveSched
+User --> UC_SetServo
 User --> UC_ServoLogs
 User --> UC_SyncRTC
 User --> UC_APWifi
 User --> UC_SrvWifi
 
-' Hubungan Device & RTC
-Device --> UC_HeartbeatPoll
-Device --> UC_ExecSched
-RTC --> UC_ExecSched
-
+' Relasi Include
 UC_AddSched ..> UC_ViewSched : <<include>>
 UC_EditSched ..> UC_ViewSched : <<include>>
 UC_DelSched ..> UC_ViewSched : <<include>>
+UC_SaveSched ..> UC_ViewSched : <<include>>
+
+' Relasi IoT Device & RTC
+Device --> UC_HeartbeatPoll
+Device --> UC_ExecSched
+Device --> UC_FeedNow
+RTC --> UC_ExecSched
+RTC ..> UC_SyncRTC : <<diselaraskan>>
 
 @enduml
